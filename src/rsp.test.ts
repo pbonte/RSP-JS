@@ -1,11 +1,11 @@
-import {RSPEngine} from "./rsp";
+import {RDFStream, RSPEngine} from "./rsp";
 import {EventEmitter} from "events";
 const N3 = require('n3');
 
 const { DataFactory } = N3;
 const { namedNode, literal, defaultGraph, quad } = DataFactory;
 
-function generate_data(num_events: number, rspEngine: RSPEngine) {
+function generate_data(num_events: number, rdfStream: RDFStream) {
     for (let i = 0; i < num_events; i++) {
         const stream_element = quad(
             namedNode('https://rsp.js/test_subject_' + i),
@@ -13,12 +13,13 @@ function generate_data(num_events: number, rspEngine: RSPEngine) {
             namedNode('http://rsp.js/test_object'),
             defaultGraph(),
         );
-        rspEngine.add(stream_element, i);
+        rdfStream.add(stream_element, i);
     }
 }
 test('basic again', async () => {
 
     var rspEngine = new RSPEngine(10, 2, "Select * WHERE{?s ?p ?o}");
+    var stream= rspEngine.create_stream("inputStream");
     var emitter = rspEngine.register();
     var results = new Array<string>();
     // @ts-ignore
@@ -27,7 +28,7 @@ test('basic again', async () => {
         results.push(bindings.toString());
     });
 
-    generate_data(10, rspEngine);
+    generate_data(10, stream);
     // @ts-ignore
     const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     await sleep(1000);

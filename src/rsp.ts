@@ -8,6 +8,22 @@ const { DataFactory } = N3;
 const { namedNode, literal, defaultGraph, quad } = DataFactory;
 // @ts-ignore
 import {Quad} from 'n3';
+
+export class RDFStream{
+    name: string;
+    emitter: EventEmitter;
+    constructor(name: string, engine: RSPEngine) {
+        this.name = name;
+        var EventEmitter = require('events').EventEmitter;
+        this.emitter = new EventEmitter();
+        this.emitter.on('data', (quadcontainer: QuadContainer) => {
+            engine.add(quadcontainer.elements, quadcontainer.last_time_changed());
+        });
+    }
+    add(event: Set<Quad>, ts: number){
+        this.emitter.emit('data',new QuadContainer(event,ts));
+    }
+}
 export class RSPEngine {
     window: CSPARQLWindow;
     private r2r: R2ROperator;
@@ -21,22 +37,6 @@ export class RSPEngine {
         var emitter = new EventEmitter();
         this.window.subscribe("RStream", async (data: QuadContainer) => {
             console.log('Received window content', data);
-            // const quad1 = quad(
-            //     namedNode('https://rsp.js/test_subject_0'),
-            //     namedNode('http://rsp.js/test_property'),
-            //     namedNode('http://rsp.js/test_object'),
-            //     defaultGraph(),
-            // );
-            // const quad2 = quad(
-            //     namedNode('https://rsp.js/test_subject_1'),
-            //     namedNode('http://rsp.js/test_property'),
-            //     namedNode('http://rsp.js/test_object'),
-            //     defaultGraph(),
-            // );
-            // let quadSet = new Set<Quad>();
-            // quadSet.add(quad1);
-            // quadSet.add(quad2);
-            //let container = new QuadContainer(quadSet,0);
             var bindingsStream = await this.r2r.execute(data);
             // @ts-ignore
             bindingsStream.on('data', (binding) => {
@@ -51,7 +51,10 @@ export class RSPEngine {
         });
         return emitter;
     }
-
+    create_stream(stream_name: string){
+        let stream = new RDFStream(stream_name, this);
+        return stream;
+    }
     add(stream_element: any, ts: number) {
         this.window.add(stream_element, ts);
     }
