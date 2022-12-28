@@ -21,7 +21,7 @@ export enum Tick {
     BatchDriven,
 }
 
-export class WindowDefinition{
+export class WindowInstance {
     open: number;
     close: number;
     constructor(open: number, close: number) {
@@ -64,7 +64,7 @@ export class CSPARQLWindow {
     slide: number;
     time: number;
     t0: number;
-    active_windows: Map<WindowDefinition, QuadContainer>;
+    active_windows: Map<WindowInstance, QuadContainer>;
     report: ReportStrategy;
     tick: Tick;
     emitter: EventEmitter;
@@ -75,14 +75,14 @@ export class CSPARQLWindow {
         this.tick = tick;
         this.time = start_time;
         this.t0 = start_time;
-        this.active_windows = new Map<WindowDefinition, QuadContainer>();
+        this.active_windows = new Map<WindowInstance, QuadContainer>();
         var EventEmitter = require('events').EventEmitter;
         this.emitter = new EventEmitter();
     }
 
     add(e: Quad, timestamp: number) {
         console.debug("Received element (" + e + "," + timestamp + ")");
-        var toEvict = new Set<WindowDefinition>();
+        var toEvict = new Set<WindowInstance>();
         var t_e = timestamp;
 
         if (this.time > t_e) {
@@ -106,7 +106,7 @@ export class CSPARQLWindow {
         }
         var max_window = null;
         var max_time = 0;
-        this.active_windows.forEach((value: QuadContainer,window:WindowDefinition)=> {
+        this.active_windows.forEach((value: QuadContainer,window:WindowInstance)=> {
             if(this.compute_report(window,value, timestamp)){
                 if(window.close > max_time){
                     max_time = window.close;
@@ -132,7 +132,7 @@ export class CSPARQLWindow {
 
     }
     //TODO add other reportinig policies
-    compute_report(w: WindowDefinition, content: QuadContainer, timestamp: number){
+    compute_report(w: WindowInstance, content: QuadContainer, timestamp: number){
         if(this.report == ReportStrategy.OnWindowClose) {
             return w.close < timestamp;
         }
@@ -146,7 +146,7 @@ export class CSPARQLWindow {
         console.debug("Calculating the Windows to Open. First one opens at [" + o_i + "] and closes at [" + c_sup + "]");
         do {
             console.debug("Computing Window [" + o_i + "," + (o_i + this.width) + ") if absent");
-            computeWindowIfAbsent(this.active_windows, new WindowDefinition(o_i, o_i + this.width), ()=>new QuadContainer(new Set<Quad>(),0));
+            computeWindowIfAbsent(this.active_windows, new WindowInstance(o_i, o_i + this.width), ()=>new QuadContainer(new Set<Quad>(),0));
             o_i += this.slide;
 
         } while (o_i <= t_e);
@@ -157,7 +157,7 @@ export class CSPARQLWindow {
         this.emitter.on(output,call_back);
     }
 }
-function computeWindowIfAbsent(map: Map<WindowDefinition, QuadContainer>, key: WindowDefinition, mappingFunction: (key: WindowDefinition) => QuadContainer) {
+function computeWindowIfAbsent(map: Map<WindowInstance, QuadContainer>, key: WindowInstance, mappingFunction: (key: WindowInstance) => QuadContainer) {
     let val = map.get(key);
     let found = false;
     for (let w of map.keys()){

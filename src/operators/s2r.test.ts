@@ -1,4 +1,4 @@
-import {CSPARQLWindow, QuadContainer, ReportStrategy, Tick, WindowDefinition} from './s2r';
+import {CSPARQLWindow, QuadContainer, ReportStrategy, Tick, WindowInstance} from './s2r';
 
 const N3 = require('n3');
 
