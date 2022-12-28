@@ -68,7 +68,9 @@ export class CSPARQLWindow {
     report: ReportStrategy;
     tick: Tick;
     emitter: EventEmitter;
-    constructor(width: number, slide: number, report: ReportStrategy, tick: Tick, start_time : number) {
+    name: string;
+    constructor(name:string, width: number, slide: number, report: ReportStrategy, tick: Tick, start_time : number) {
+        this.name = name;
         this.width = width;
         this.slide = slide;
         this.report = report;

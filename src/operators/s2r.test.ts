@@ -56,13 +56,13 @@ test('add_to_window', () => {
             defaultGraph(),
     );
 
-    var csparqlWindow = new CSPARQLWindow(10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    var csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
 
     csparqlWindow.add(quad,0);
 });
 
 test('test_scope', () => {
-    var csparqlWindow = new CSPARQLWindow(10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    var csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
     csparqlWindow.scope(4);
 
     var num_active_windows = csparqlWindow.active_windows.size;
@@ -79,7 +79,7 @@ test('test_scope', () => {
     expect(num_active_windows).toBe(6);
 });
 test('test_evictions', () => {
-    var csparqlWindow = new CSPARQLWindow(10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    var csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
 
     generate_data(10, csparqlWindow);
 
@@ -89,7 +89,7 @@ test('test_evictions', () => {
 test('test_stream_consumer', () => {
    var recevied_data = new Array<QuadContainer>();
    var received_elementes = new Array<Quad>;
-    var csparqlWindow = new CSPARQLWindow(10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    var csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
     // register window consumer
     csparqlWindow.subscribe('RStream',function (data: QuadContainer) {
         console.log('Foo raised, Args:', data);

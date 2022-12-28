@@ -16,10 +16,17 @@ function generate_data(num_events: number, rdfStream: RDFStream) {
         rdfStream.add(stream_element, i);
     }
 }
-test('basic again', async () => {
+test('rsp_consumer_test', async () => {
+    let query = `PREFIX : <https://rsp.js/>
+    REGISTER RStream <output> AS
+    SELECT *
+    FROM NAMED WINDOW :w1 ON STREAM :stream1 [RANGE 10 STEP 2]
+    WHERE{
+        WINDOW :w1 { ?s ?p ?o}
+    }`;
 
-    var rspEngine = new RSPEngine(10, 2, "Select * WHERE{?s ?p ?o}");
-    var stream= rspEngine.create_stream("inputStream");
+    var rspEngine = new RSPEngine(query);
+    var stream= rspEngine.getStream("https://rsp.js/stream1");
     var emitter = rspEngine.register();
     var results = new Array<string>();
     // @ts-ignore
@@ -27,8 +34,10 @@ test('basic again', async () => {
         console.log("received results");
         results.push(bindings.toString());
     });
+    if(stream){
+        generate_data(10, stream);
+    }
 
-    generate_data(10, stream);
     // @ts-ignore
     const sleep = (ms) => new Promise(r => setTimeout(r, ms));
     await sleep(1000);
@@ -38,18 +47,3 @@ test('basic again', async () => {
     console.log(results);
 });
 
-test('emitter_wrapper',()=> {
-    var EventEmitter = require('events').EventEmitter;
-    var emitter = new EventEmitter();
-    var emitter2 = new EventEmitter();
-    emitter.on("data",function (data: string){
-        emitter2.emit("data", data);
-    });
-
-    emitter2.on("data", function (data: string){
-        console.log("receivved " + data);
-    });
-    emitter.emit("data","test1");
-
-
-});

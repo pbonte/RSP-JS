@@ -20,7 +20,7 @@ class ParsedQuery {
         this.s2r.push(s2r);
     }
 }
-type WindowDefinition = {
+export type WindowDefinition = {
     window_name: string,
     stream_name: string,
     width: number,
@@ -35,6 +35,7 @@ export class RSPQLParser {
         var parsed = new ParsedQuery();
         var split = query.split(/\r?\n/);
         var sparqlLines = new Array<string>();
+        var prefixMapper = new Map<string,string>();
         split.forEach((line)=>{
             let trimmed_line = line.trim();
             //R2S
@@ -51,13 +52,8 @@ export class RSPQLParser {
                 const regexp = /FROM +NAMED +WINDOW +([^ ]+) +ON +STREAM +([^ ]+) +\[RANGE +([^ ]+) +STEP +([^ ]+)\]/g;
                 const matches = trimmed_line.matchAll(regexp);
                 for (const match of matches) {
-                    console.log(match[1]);
-
-                    console.log(match[2]);
-                    console.log(match[3]);
-                    console.log(match[4]);
-                    parsed.add_s2r({window_name: match[1],
-                        stream_name: match[2],
+                    parsed.add_s2r({window_name: this.unwrap(match[1],prefixMapper),
+                        stream_name: this.unwrap(match[2],prefixMapper),
                         width: Number(match[3]),
                         slide: Number(match[4])});
                 }
@@ -66,10 +62,29 @@ export class RSPQLParser {
                 if (sparqlLine.startsWith("WINDOW")){
                     sparqlLine = sparqlLine.replace("WINDOW","GRAPH");
                 }
+                if (sparqlLine.startsWith("PREFIX")){
+                    const regexp = /PREFIX +([^:]*): +<([^>]+)>/g;
+                    const matches = trimmed_line.matchAll(regexp);
+                    for (const match of matches) {
+                        prefixMapper.set(match[1],match[2]);
+                    }
+                }
                 sparqlLines.push(sparqlLine);
             }
         });
         parsed.sparql = sparqlLines.join("\n");
         return parsed;
+    }
+    unwrap(prefixedIri: string, mapper: Map<string,string>){
+        if(prefixedIri.trim().startsWith("<")){
+            return prefixedIri.trim().slice(1,-1);
+        }
+        var split = prefixedIri.trim().split(":");
+        var iri = split[0];
+        if (mapper.has(iri)){
+            return mapper.get(iri)+split[1];
+        }else{
+            return "";
+        }
     }
 }

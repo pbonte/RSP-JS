@@ -34,8 +34,8 @@ test('test_single_window', async () => {
     var parser = new RSPQLParser();
     var parsed_query = parser.parse(simple_query);
 
-    let expected_windows = {window_name: ":w1",
-        stream_name: ":stream1",
+    let expected_windows = {window_name: "https://rsp.js/w1",
+        stream_name: "https://rsp.js/stream1",
         width: 10,
         slide: 2};
     expect(parsed_query.s2r[0]).toStrictEqual(expected_windows);
@@ -45,12 +45,12 @@ test('test_multiple_window', async () => {
     var parser = new RSPQLParser();
     var parsed_query = parser.parse(advanced_query);
 
-    let expected_windows = [{window_name: ":w1",
-        stream_name: ":stream1",
+    let expected_windows = [{window_name: "https://rsp.js/w1",
+        stream_name: "https://rsp.js/stream1",
         width: 10,
         slide: 2},
-        {window_name: ":w2",
-            stream_name: ":stream2",
+        {window_name: "https://rsp.js/w2",
+            stream_name: "https://rsp.js/stream2",
             width: 10,
             slide: 2}
     ];
