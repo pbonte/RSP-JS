@@ -14,9 +14,11 @@ An RDF Stream Processing Library for Javascript built on top of [N3.js](https://
     var rspEngine = new RSPEngine(query);
     var stream= rspEngine.getStream("https://rsp.js/stream1");
     var resultStream = rspEngine.register();
-    // @ts-ignore
+
     resultStream.on('RStream', (bindings) => {
         console.log(bindings);
     });
+    ...
+    stream.add(<some_graph>, <some_timestamp>);
 
 ```
