@@ -22,3 +22,8 @@ An RDF Stream Processing Library for Javascript built on top of [N3.js](https://
     stream.add(<some_graph>, <some_timestamp>);
 
 ```
+
+## TODO list:
+- [x] RSP-QL support
+- [ ] Support multiple windows
+- [ ] Support inference
