@@ -26,4 +26,5 @@ An RDF Stream Processing Library for Javascript built on top of [N3.js](https://
 ## TODO list:
 - [x] RSP-QL support
 - [x] Support multiple windows
+- [x] Support for stream and static data joins
 - [ ] Support inference
