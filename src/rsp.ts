@@ -52,6 +52,19 @@ export class RSPEngine {
         this.windows.forEach((window)=>{
             window.subscribe("RStream", async (data: QuadContainer) => {
                 console.log('Received window content', data);
+                // iterate over all the windows
+                for (var windowIt of this.windows){
+                    // filter out the current triggering one
+                    if(windowIt!= window){
+                        let currentWindowData = windowIt.getContent(data.last_time_changed());
+                        if(currentWindowData){
+                            // add the content of the other windows to the quad container
+                            currentWindowData.elements.forEach((q)=>
+                                        data.add(q, data.last_time_changed())
+                            );
+                        }
+                    }
+                }
                 var bindingsStream = await this.r2r.execute(data);
                 // @ts-ignore
                 bindingsStream.on('data', (binding) => {
@@ -71,7 +84,8 @@ export class RSPEngine {
     getStream(stream_name: string){
         return this.streams.get(stream_name);
     }
-    // add(stream_element: any, window_name:string, ts: number) {
-    //     this.windows.add(stream_element, ts);
-    // }
+
+    addStaticData(static_data: Quad) {
+        this.r2r.addStaticData(static_data);
+    }
 }

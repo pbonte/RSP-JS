@@ -49,8 +49,9 @@ export class QuadContainer{
     len() {
         return this.elements.size;
     }
-    add(quad: Quad){
+    add(quad: Quad, ts: number){
         this.elements.add(quad);
+        this.last_time_stamp_changed = ts;
     }
 
     last_time_changed() {
@@ -81,9 +82,26 @@ export class CSPARQLWindow {
         var EventEmitter = require('events').EventEmitter;
         this.emitter = new EventEmitter();
     }
+    getContent(timestamp: number): QuadContainer | undefined{
+        var max_window = null;
+        var max_time = Number.MAX_SAFE_INTEGER;
+        this.active_windows.forEach((value: QuadContainer,window:WindowInstance)=> {
+            if(window.open <= timestamp && timestamp <= window.close){
+                if(window.close < max_time){
+                    max_time = window.close;
+                    max_window = window;
+                }
+            }
+        });
+        if(max_window){
+            return this.active_windows.get(max_window);
+        }else{
+            return undefined;
+        }
+    }
 
     add(e: Quad, timestamp: number) {
-        console.debug("Received element (" + e + "," + timestamp + ")");
+        console.debug("Window " + this.name+ " Received element (" + e + "," + timestamp + ")");
         var toEvict = new Set<WindowInstance>();
         var t_e = timestamp;
 
@@ -94,12 +112,12 @@ export class CSPARQLWindow {
         this.scope(t_e);
 
         for ( var w of this.active_windows.keys()){
-            console.debug("Processing Window [" + w.open + "," + w.close + ") for element (" + e + "," + timestamp + ")");
+            console.debug("Processing Window " + this.name+ " [" + w.open + "," + w.close + ") for element (" + e + "," + timestamp + ")");
                 if (w.open <= t_e && t_e < w.close ){
                     console.debug("Adding element [" + e + "] to Window [" + w.open + "," + w.close + ")");
                     var temp_window = this.active_windows.get(w);
                     if(temp_window){
-                        temp_window.add(e);
+                        temp_window.add(e, timestamp);
                     }
                 } else if (t_e > w.close ){
                     console.debug("Scheduling for Eviction [" + w.open + "," + w.close + ")");

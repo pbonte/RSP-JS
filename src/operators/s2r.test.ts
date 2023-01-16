@@ -104,3 +104,20 @@ test('test_stream_consumer', () => {
     expect(received_elementes.length).toBe(2+4+6+8);
 
 });
+
+test('test_content_get', () => {
+    var recevied_data = new Array<QuadContainer>();
+    var received_elementes = new Array<Quad>;
+    var csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+
+    // generate some data
+    generate_data(10, csparqlWindow);
+
+    let content = csparqlWindow.getContent(10);
+    expect(content).toBeDefined();
+    if(content) {
+        expect(content.elements.size).toBe(10);
+    }
+    let undefinedContent = csparqlWindow.getContent(20);
+    expect(undefinedContent).toBeUndefined();
+});
