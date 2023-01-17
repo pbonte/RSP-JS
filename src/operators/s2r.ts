@@ -1,13 +1,5 @@
 import {EventEmitter} from "events";
-
-const N3 = require('n3');
-
-const { DataFactory } = N3;
-const { namedNode, literal, defaultGraph, quad } = DataFactory;
-
-// @ts-ignore
 import {Quad} from 'n3';
-
 
 export enum ReportStrategy {
     NonEmptyContent,
@@ -79,12 +71,12 @@ export class CSPARQLWindow {
         this.time = start_time;
         this.t0 = start_time;
         this.active_windows = new Map<WindowInstance, QuadContainer>();
-        var EventEmitter = require('events').EventEmitter;
+        let EventEmitter = require('events').EventEmitter;
         this.emitter = new EventEmitter();
     }
     getContent(timestamp: number): QuadContainer | undefined{
-        var max_window = null;
-        var max_time = Number.MAX_SAFE_INTEGER;
+        let max_window = null;
+        let max_time = Number.MAX_SAFE_INTEGER;
         this.active_windows.forEach((value: QuadContainer,window:WindowInstance)=> {
             if(window.open <= timestamp && timestamp <= window.close){
                 if(window.close < max_time){
@@ -102,8 +94,8 @@ export class CSPARQLWindow {
 
     add(e: Quad, timestamp: number) {
         console.debug("Window " + this.name+ " Received element (" + e + "," + timestamp + ")");
-        var toEvict = new Set<WindowInstance>();
-        var t_e = timestamp;
+        let toEvict = new Set<WindowInstance>();
+        let t_e = timestamp;
 
         if (this.time > t_e) {
             console.error("OUT OF ORDER NOT HANDLED");
@@ -111,11 +103,11 @@ export class CSPARQLWindow {
 
         this.scope(t_e);
 
-        for ( var w of this.active_windows.keys()){
+        for ( let w of this.active_windows.keys()){
             console.debug("Processing Window " + this.name+ " [" + w.open + "," + w.close + ") for element (" + e + "," + timestamp + ")");
                 if (w.open <= t_e && t_e < w.close ){
                     console.debug("Adding element [" + e + "] to Window [" + w.open + "," + w.close + ")");
-                    var temp_window = this.active_windows.get(w);
+                    let temp_window = this.active_windows.get(w);
                     if(temp_window){
                         temp_window.add(e, timestamp);
                     }
@@ -124,8 +116,8 @@ export class CSPARQLWindow {
                     toEvict.add(w);
                 }
         }
-        var max_window = null;
-        var max_time = 0;
+        let max_window = null;
+        let max_time = 0;
         this.active_windows.forEach((value: QuadContainer,window:WindowInstance)=> {
             if(this.compute_report(window,value, timestamp)){
                 if(window.close > max_time){
@@ -145,13 +137,12 @@ export class CSPARQLWindow {
             }
         }
 
-        for(var w of toEvict){
+        for(let w of toEvict){
             console.debug("Evicting [" + w.open + "," + w.close + ")");
             this.active_windows.delete(w);
         }
 
     }
-    //TODO add other reportinig policies
     compute_report(w: WindowInstance, content: QuadContainer, timestamp: number){
         if(this.report == ReportStrategy.OnWindowClose) {
             return w.close < timestamp;
@@ -161,8 +152,8 @@ export class CSPARQLWindow {
     }
 
     scope(t_e:number){
-        var c_sup =  Math.ceil(( Math.abs(t_e - this.t0) / this.slide)) * this.slide;
-        var o_i = c_sup - this.width;
+        let c_sup =  Math.ceil(( Math.abs(t_e - this.t0) / this.slide)) * this.slide;
+        let o_i = c_sup - this.width;
         console.debug("Calculating the Windows to Open. First one opens at [" + o_i + "] and closes at [" + c_sup + "]");
         do {
             console.debug("Computing Window [" + o_i + "," + (o_i + this.width) + ") if absent");

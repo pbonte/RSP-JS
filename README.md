@@ -1,6 +1,15 @@
 # RSP.js
 An RDF Stream Processing Library for Javascript built on top of [N3.js](https://github.com/rdfjs/N3.js/) and [Comunica](https://comunica.dev/)
 
+## Installation
+```
+npm i rsp-js
+```
+
+## Code examples
+
+### 
+
 ## How to use RSP.js
 ```ts
     let query = `PREFIX : <https://rsp.js/>
@@ -11,20 +20,18 @@ An RDF Stream Processing Library for Javascript built on top of [N3.js](https://
         WINDOW :w1 { ?s ?p ?o}
     }`;
 
-    var rspEngine = new RSPEngine(query);
-    var stream= rspEngine.getStream("https://rsp.js/stream1");
-    var resultStream = rspEngine.register();
+    let rspEngine = new RSPEngine(query);
+    let stream= rspEngine.getStream("https://rsp.js/stream1");
+    let resultStream = rspEngine.register();
 
     resultStream.on('RStream', (bindings) => {
         console.log(bindings);
     });
     ...
     stream.add(<some_graph>, <some_timestamp>);
-
 ```
 
-## TODO list:
-- [x] RSP-QL support
-- [x] Support multiple windows
-- [x] Support for stream and static data joins
-- [ ] Support inference
+## Current Features:
+- RSP-QL support
+- Support multiple windows
+- Support for stream and static data joins

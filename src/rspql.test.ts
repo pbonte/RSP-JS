@@ -1,4 +1,3 @@
-import {RSPEngine} from "./rsp";
 import {RSPQLParser} from "./rspql";
 
 
@@ -22,8 +21,8 @@ let advanced_query = `PREFIX : <https://rsp.js/>
     }`;
 
 test('test_r2s', async () => {
-    var parser = new RSPQLParser();
-    var parsed_query = parser.parse(simple_query);
+    let parser = new RSPQLParser();
+    let parsed_query = parser.parse(simple_query);
 
     let expected_r2s = {operator: "RStream", name: "output"};
     expect(parsed_query.r2s).toStrictEqual(expected_r2s);
@@ -31,8 +30,8 @@ test('test_r2s', async () => {
 });
 
 test('test_single_window', async () => {
-    var parser = new RSPQLParser();
-    var parsed_query = parser.parse(simple_query);
+    let parser = new RSPQLParser();
+    let parsed_query = parser.parse(simple_query);
 
     let expected_windows = {window_name: "https://rsp.js/w1",
         stream_name: "https://rsp.js/stream1",
@@ -42,8 +41,8 @@ test('test_single_window', async () => {
 });
 
 test('test_multiple_window', async () => {
-    var parser = new RSPQLParser();
-    var parsed_query = parser.parse(advanced_query);
+    let parser = new RSPQLParser();
+    let parsed_query = parser.parse(advanced_query);
 
     let expected_windows = [{window_name: "https://rsp.js/w1",
         stream_name: "https://rsp.js/stream1",
@@ -57,8 +56,8 @@ test('test_multiple_window', async () => {
     expect(parsed_query.s2r).toStrictEqual(expected_windows);
 });
 test('test_simple_sparql_extract', async () => {
-    var parser = new RSPQLParser();
-    var parsed_query = parser.parse(simple_query);
+    let parser = new RSPQLParser();
+    let parsed_query = parser.parse(simple_query);
 
     let expected_sparql =
         `PREFIX : <https://rsp.js/>
@@ -70,8 +69,8 @@ GRAPH :w1 { ?sensor :value ?v ; :measurement: ?m }
 });
 
 test('test_sparql_extract_multiple_windows', async () => {
-    var parser = new RSPQLParser();
-    var parsed_query = parser.parse(advanced_query);
+    let parser = new RSPQLParser();
+    let parsed_query = parser.parse(advanced_query);
 
     let expected_sparql =
         `PREFIX : <https://rsp.js/>

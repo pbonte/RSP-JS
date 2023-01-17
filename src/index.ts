@@ -1,6 +1,8 @@
-console.log("test");
-console.log("test2");
-var t = 0;
+// exporting the operators.
+export * from './operators/s2r';
+export * from './operators/r2r';
 
-t +=1;
-t -= 2;
+// exporting other files.
+
+export * from './rspql';
+export * from './rsp';

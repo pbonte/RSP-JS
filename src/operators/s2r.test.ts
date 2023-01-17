@@ -31,10 +31,10 @@ test('create_graph_container', () => {
         literal('Verborgh', 'en'),
         defaultGraph(),
     );
-    var content = new Set<Quad>;
+    let content = new Set<Quad>;
     content.add(quad1);
     content.add(quad2);
-    var container = new QuadContainer(content, 0);
+    let container = new QuadContainer(content, 0);
 
     expect(container.len()).toBe(2);
     expect(container.last_time_changed()).toBe(0);
@@ -56,16 +56,16 @@ test('add_to_window', () => {
             defaultGraph(),
     );
 
-    var csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
 
     csparqlWindow.add(quad,0);
 });
 
 test('test_scope', () => {
-    var csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
     csparqlWindow.scope(4);
 
-    var num_active_windows = csparqlWindow.active_windows.size;
+    let num_active_windows = csparqlWindow.active_windows.size;
     /**
      * open windows:
      * [-6, 4)
@@ -79,7 +79,7 @@ test('test_scope', () => {
     expect(num_active_windows).toBe(6);
 });
 test('test_evictions', () => {
-    var csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
 
     generate_data(10, csparqlWindow);
 
@@ -87,9 +87,9 @@ test('test_evictions', () => {
 });
 
 test('test_stream_consumer', () => {
-   var recevied_data = new Array<QuadContainer>();
-   var received_elementes = new Array<Quad>;
-    var csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+   let recevied_data = new Array<QuadContainer>();
+   let received_elementes = new Array<Quad>;
+    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
     // register window consumer
     csparqlWindow.subscribe('RStream',function (data: QuadContainer) {
         console.log('Foo raised, Args:', data);
@@ -106,9 +106,9 @@ test('test_stream_consumer', () => {
 });
 
 test('test_content_get', () => {
-    var recevied_data = new Array<QuadContainer>();
-    var received_elementes = new Array<Quad>;
-    var csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    let recevied_data = new Array<QuadContainer>();
+    let received_elementes = new Array<Quad>;
+    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
 
     // generate some data
     generate_data(10, csparqlWindow);
