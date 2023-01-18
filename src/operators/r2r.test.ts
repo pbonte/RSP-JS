@@ -26,7 +26,7 @@ test('test_query_engine', async () => {
     quadSet.add(quad2);
     let container = new QuadContainer(quadSet,0);
     const bindingsStream = await r2r.execute(container);
-    var resuults = new Array<string>();
+    let resuults = new Array<string>();
     // @ts-ignore
     bindingsStream.on('data', (binding) => {
         console.log(binding.toString()); // Quick way to print bindings for testing

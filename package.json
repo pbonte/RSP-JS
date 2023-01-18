@@ -2,12 +2,14 @@
   "name": "rsp-js",
   "version": "1.0.0",
   "description": "",
+  "types": "dist/index.d.ts",
   "main": "dist/index.js",
   "scripts": {
-    "build": "npx tsc",
+    "build": "npx tsc && tsc -d --declarationDir dist/ --emitDeclarationOnly",
     "start": "node dist/index.js",
     "test": "jest --coverage",
-    "test:watch": "jest --watch"
+    "test:watch": "jest --watch",
+    "release": "npm run build && npm publish --access public"
   },
   "keywords": ["RSP", "RDF Stream Processing", "Semantic Web", "RDF"],
   "author": "Pieter Bonte",

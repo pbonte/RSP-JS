@@ -1,9 +1,8 @@
 import {RDFStream, RSPEngine} from "./rsp";
-import {EventEmitter} from "events";
 const N3 = require('n3');
 
 const { DataFactory } = N3;
-const { namedNode, literal, defaultGraph, quad } = DataFactory;
+const { namedNode, defaultGraph, quad } = DataFactory;
 
 function generate_data(num_events: number, rdfStreams: RDFStream[]) {
     for (let i = 0; i < num_events; i++) {
@@ -38,10 +37,10 @@ test('rsp_consumer_test', async () => {
         WINDOW :w1 { ?s ?p ?o}
     }`;
 
-    var rspEngine = new RSPEngine(query);
-    var stream= rspEngine.getStream("https://rsp.js/stream1");
-    var emitter = rspEngine.register();
-    var results = new Array<string>();
+    let rspEngine = new RSPEngine(query);
+    let stream= rspEngine.getStream("https://rsp.js/stream1");
+    let emitter = rspEngine.register();
+    let results = new Array<string>();
     // @ts-ignore
     emitter.on('RStream', (bindings) => {
         console.log("received results");
@@ -71,12 +70,12 @@ test('rsp_multiple_same_window_test', async () => {
         WINDOW :w2 { ?s ?p ?o}
     }`;
 
-    var rspEngine = new RSPEngine(query);
-    var stream1 = rspEngine.getStream("https://rsp.js/stream1");
-    var stream2 = rspEngine.getStream("https://rsp.js/stream2");
+    let rspEngine = new RSPEngine(query);
+    let stream1 = rspEngine.getStream("https://rsp.js/stream1");
+    let stream2 = rspEngine.getStream("https://rsp.js/stream2");
 
-    var emitter = rspEngine.register();
-    var results = new Array<string>();
+    let emitter = rspEngine.register();
+    let results = new Array<string>();
     // @ts-ignore
     emitter.on('RStream', (bindings) => {
         console.log("received results");
@@ -107,12 +106,12 @@ test('rsp_multiple_difff_window_test', async () => {
         WINDOW :w2 { ?s ?p2 ?o2}
     }`;
 
-    var rspEngine = new RSPEngine(query);
-    var stream1 = rspEngine.getStream("https://rsp.js/stream1");
-    var stream2 = rspEngine.getStream("https://rsp.js/stream2");
+    let rspEngine = new RSPEngine(query);
+    let stream1 = rspEngine.getStream("https://rsp.js/stream1");
+    let stream2 = rspEngine.getStream("https://rsp.js/stream2");
 
-    var emitter = rspEngine.register();
-    var results = new Array<string>();
+    let emitter = rspEngine.register();
+    let results = new Array<string>();
     // @ts-ignore
     emitter.on('RStream', (bindings) => {
         console.log("received results");
@@ -156,7 +155,7 @@ test('rsp_static_plus_window_test', async () => {
         WINDOW :w1 { ?s ?p ?o}
     }`;
 
-    var rspEngine = new RSPEngine(query);
+    let rspEngine = new RSPEngine(query);
     const static_data = quad(
         namedNode('http://rsp.js/test_object'),
         namedNode('https://rsp.js/hasInfo'),
@@ -165,10 +164,10 @@ test('rsp_static_plus_window_test', async () => {
     );
     rspEngine.addStaticData(static_data);
 
-    var stream1 = rspEngine.getStream("https://rsp.js/stream1");
+    let stream1 = rspEngine.getStream("https://rsp.js/stream1");
 
-    var emitter = rspEngine.register();
-    var results = new Array<string>();
+    let emitter = rspEngine.register();
+    let results = new Array<string>();
     // @ts-ignore
     emitter.on('RStream', (bindings) => {
         console.log("received results");

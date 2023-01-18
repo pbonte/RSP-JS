@@ -1,5 +1,4 @@
 import {QuadContainer} from "./s2r";
-import {QueryEngine} from "@comunica/query-sparql";
 const N3 = require('n3');
 
 const { DataFactory } = N3;
@@ -18,11 +17,11 @@ export class R2ROperator{
     }
     async execute(container: QuadContainer){
         const store = new N3.Store();
-        for(var elem of container.elements){
+        for(let elem of container.elements){
             store.addQuad(elem);
 
         }
-        for(var elem of this.staticData){
+        for(let elem of this.staticData){
             store.addQuad(elem);
         }
         const QueryEngine = require('@comunica/query-sparql').QueryEngine;
