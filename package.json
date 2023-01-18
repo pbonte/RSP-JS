@@ -1,5 +1,5 @@
 {
-  "name": "rsp4js",
+  "name": "rsp-js",
   "version": "1.0.0",
   "description": "",
   "main": "dist/index.js",
@@ -9,7 +9,7 @@
     "test": "jest --coverage",
     "test:watch": "jest --watch"
   },
-  "keywords": [],
+  "keywords": ["RSP", "RDF Stream Processing", "Semantic Web", "RDF"],
   "author": "Pieter Bonte",
   "license": "MIT",
   "devDependencies": {
