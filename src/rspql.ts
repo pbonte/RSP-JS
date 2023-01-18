@@ -1,5 +1,4 @@
-
-class ParsedQuery {
+export class ParsedQuery {
     sparql: string;
     r2s: R2S;
     s2r: Array<WindowDefinition>;
@@ -32,10 +31,10 @@ type R2S = {
 }
 export class RSPQLParser {
     parse(query: string): ParsedQuery{
-        var parsed = new ParsedQuery();
-        var split = query.split(/\r?\n/);
-        var sparqlLines = new Array<string>();
-        var prefixMapper = new Map<string,string>();
+        let parsed = new ParsedQuery();
+        let split = query.split(/\r?\n/);
+        let sparqlLines = new Array<string>();
+        let prefixMapper = new Map<string,string>();
         split.forEach((line)=>{
             let trimmed_line = line.trim();
             //R2S
@@ -58,7 +57,7 @@ export class RSPQLParser {
                         slide: Number(match[4])});
                 }
             }else{
-                var sparqlLine = trimmed_line;
+                let sparqlLine = trimmed_line;
                 if (sparqlLine.startsWith("WINDOW")){
                     sparqlLine = sparqlLine.replace("WINDOW","GRAPH");
                 }
@@ -79,8 +78,8 @@ export class RSPQLParser {
         if(prefixedIri.trim().startsWith("<")){
             return prefixedIri.trim().slice(1,-1);
         }
-        var split = prefixedIri.trim().split(":");
-        var iri = split[0];
+        let split = prefixedIri.trim().split(":");
+        let iri = split[0];
         if (mapper.has(iri)){
             return mapper.get(iri)+split[1];
         }else{
