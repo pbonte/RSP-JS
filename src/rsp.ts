@@ -1,13 +1,13 @@
-import {CSPARQLWindow, QuadContainer, ReportStrategy, Tick} from "./operators/s2r";
-import {R2ROperator} from "./operators/r2r";
-import {EventEmitter} from "events";
+import { CSPARQLWindow, QuadContainer, ReportStrategy, Tick } from "./operators/s2r";
+import { R2ROperator } from "./operators/r2r";
+import { EventEmitter } from "events";
 
 const N3 = require('n3');
-const {DataFactory} = N3;
-const {namedNode, literal, defaultGraph, quad} = DataFactory;
+const { DataFactory } = N3;
+const { namedNode, literal, defaultGraph, quad } = DataFactory;
 // @ts-ignore
-import {Quad} from 'n3';
-import {RSPQLParser, WindowDefinition} from "./rspql";
+import { Quad } from 'n3';
+import { RSPQLParser, WindowDefinition } from "./rspql";
 
 export class RDFStream {
     name: string;
@@ -20,7 +20,6 @@ export class RDFStream {
         this.emitter.on('data', (quadcontainer: QuadContainer) => {
             // @ts-ignore
             quadcontainer.elements._graph = namedNode(window.name);
-
             // @ts-ignore
             window.add(quadcontainer.elements, quadcontainer.last_time_changed());
         });
@@ -69,8 +68,7 @@ export class RSPEngine {
                     }
                 }
                 let bindingsStream = await this.r2r.execute(data);
-                // @ts-ignore
-                bindingsStream.on('data', (binding) => {
+                bindingsStream.on('data', (binding: any) => {
                     console.log(binding.toString()); // Quick way to print bindings for testing
                     emitter.emit("RStream", binding);
                 });
