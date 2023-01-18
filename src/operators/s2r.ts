@@ -1,4 +1,5 @@
 import {EventEmitter} from "events";
+// @ts-ignore
 import {Quad} from 'n3';
 
 export enum ReportStrategy {
