@@ -27,7 +27,7 @@ let query = `PREFIX : <https://rsp.js/>
 You can then create an instance of the RSPEngine and pass the query to it, as shown below:
 
 ```ts
-let rspEngine = new RSPEngine(query);
+let rspEngine = new RSPEngine(query, {debug: true});
 ```
 
 You can add stream elements to the RSPEngine using the `add` method. The method takes in a stream element and a timestamp
@@ -55,7 +55,7 @@ async function RSP() {
         WINDOW :w1 { ?s ?p ?o}
     }`;
 
-  let rspEngine = new RSPEngine(query);
+  let rspEngine = new RSPEngine(query, {debug: true});
   let stream = rspEngine.getStream("https://rsp.js/stream1");
   let emitter = rspEngine.register();
   let results = new Array<string>();
