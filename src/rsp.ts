@@ -30,18 +30,25 @@ export class RDFStream {
     }
 }
 
+export interface RSPEngineOptions {
+    // TODO : add a similar option for reasoning.
+    debug: boolean;
+}
+
 export class RSPEngine {
     windows: Array<CSPARQLWindow>;
     streams: Map<string, RDFStream>;
+    options: RSPEngineOptions;
     private r2r: R2ROperator;
 
-    constructor(query: string) {
+    constructor(query: string, options: RSPEngineOptions) {
+        this.options = options;
         this.windows = new Array<CSPARQLWindow>();
         this.streams = new Map<string, RDFStream>();
         let parser = new RSPQLParser();
         let parsed_query = parser.parse(query);
         parsed_query.s2r.forEach((window: WindowDefinition) => {
-            let windowImpl = new CSPARQLWindow(window.window_name, window.width, window.slide, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+            let windowImpl = new CSPARQLWindow(window.window_name, window.width, window.slide, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0, this.options.debug);
             this.windows.push(windowImpl);
             let stream = new RDFStream(window.stream_name, windowImpl);
             this.streams.set(window.stream_name, stream);
@@ -55,7 +62,9 @@ export class RSPEngine {
         let emitter = new EventEmitter();
         this.windows.forEach((window) => {
             window.subscribe("RStream", async (data: QuadContainer) => {
-                console.log('Received window content', data);
+                if (this.options.debug) {
+                    console.log('Received window content', data);
+                }
                 // iterate over all the windows
                 for (let windowIt of this.windows) {
                     // filter out the current triggering one
@@ -69,17 +78,23 @@ export class RSPEngine {
                 }
                 let bindingsStream = await this.r2r.execute(data);
                 bindingsStream.on('data', (binding: any) => {
-                    console.log(binding.toString()); // Quick way to print bindings for testing
+                    if (this.options.debug) {
+                        console.log(binding.toString()); // Quick way to print bindings for testing
+                    }
                     emitter.emit("RStream", binding);
                 });
                 bindingsStream.on('end', () => {
-                    console.log("Ended stream");
+                        console.log("Ended stream");
                 });
                 await bindingsStream;
 
             })
         });
         return emitter;
+    }
+
+    getDebugFlag() {
+        return this.options.debug;
     }
 
     getStream(stream_name: string) {
