@@ -6,6 +6,7 @@ const { DataFactory } = N3;
 const { namedNode, literal, defaultGraph, quad } = DataFactory;
 // @ts-ignore
 import {Quad} from 'n3';
+import { RSPEngine } from '../rsp';
 function generate_data(num_events: number, csparqlWindow: CSPARQLWindow) {
     for (let i = 0; i < num_events; i++) {
         const stream_element = quad(
@@ -56,13 +57,13 @@ test('add_to_window', () => {
             defaultGraph(),
     );
 
-    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0, true)
 
     csparqlWindow.add(quad,0);
 });
 
 test('test_scope', () => {
-    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0, true);
     csparqlWindow.scope(4);
 
     let num_active_windows = csparqlWindow.active_windows.size;
@@ -79,7 +80,7 @@ test('test_scope', () => {
     expect(num_active_windows).toBe(6);
 });
 test('test_evictions', () => {
-    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0, true);
 
     generate_data(10, csparqlWindow);
 
@@ -89,7 +90,7 @@ test('test_evictions', () => {
 test('test_stream_consumer', () => {
    let recevied_data = new Array<QuadContainer>();
    let received_elementes = new Array<Quad>;
-    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0, true);
     // register window consumer
     csparqlWindow.subscribe('RStream',function (data: QuadContainer) {
         console.log('Foo raised, Args:', data);
@@ -108,7 +109,7 @@ test('test_stream_consumer', () => {
 test('test_content_get', () => {
     let recevied_data = new Array<QuadContainer>();
     let received_elementes = new Array<Quad>;
-    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0, true);
 
     // generate some data
     generate_data(10, csparqlWindow);
