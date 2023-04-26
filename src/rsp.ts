@@ -9,6 +9,12 @@ const { namedNode, literal, defaultGraph, quad } = DataFactory;
 import { Quad } from 'n3';
 import { RSPQLParser, WindowDefinition } from "./rspql";
 
+export type binding_with_timestamp = {
+    bindings: any,
+    timestamp_from: number,
+    timestamp_to: number
+}
+
 export class RDFStream {
     name: string;
     emitter: EventEmitter;
@@ -69,8 +75,13 @@ export class RSPEngine {
                 }
                 let bindingsStream = await this.r2r.execute(data);
                 bindingsStream.on('data', (binding: any) => {
-                    console.log(binding.toString()); // Quick way to print bindings for testing
-                    emitter.emit("RStream", binding);
+                    let object_with_timestamp:binding_with_timestamp = {
+                        bindings: binding,
+                        timestamp_from: window.t0,
+                        timestamp_to: window.t0 + window.slide
+                    }
+                    window.t0 += window.slide;
+                    emitter.emit("RStream", object_with_timestamp);
                 });
                 bindingsStream.on('end', () => {
                     console.log("Ended stream");
