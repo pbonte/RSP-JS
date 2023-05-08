@@ -42,9 +42,9 @@ test('rsp_consumer_test', async () => {
     let emitter = rspEngine.register();
     let results = new Array<string>();
     // @ts-ignore
-    emitter.on('RStream', (bindings) => {
+    emitter.on('RStream', (object) => {
         console.log("received results");
-        results.push(bindings.toString());
+        results.push(object.bindings.toString());
     });
     if(stream){
         generate_data(10, [stream]);
@@ -77,9 +77,9 @@ test('rsp_multiple_same_window_test', async () => {
     let emitter = rspEngine.register();
     let results = new Array<string>();
     // @ts-ignore
-    emitter.on('RStream', (bindings) => {
+    emitter.on('RStream', (object) => {
         console.log("received results");
-        results.push(bindings.toString());
+        results.push(object.bindings.toString());
     });
     if(stream1 && stream2){
         generate_data(10, [stream1, stream2]);
@@ -113,9 +113,9 @@ test('rsp_multiple_difff_window_test', async () => {
     let emitter = rspEngine.register();
     let results = new Array<string>();
     // @ts-ignore
-    emitter.on('RStream', (bindings) => {
+    emitter.on('RStream', (object) => {
         console.log("received results");
-        results.push(bindings.toString());
+        results.push(object.bindings.toString());
     });
     if(stream1 && stream2){
         for (let i = 0; i < 10; i++) {
@@ -169,9 +169,9 @@ test('rsp_static_plus_window_test', async () => {
     let emitter = rspEngine.register();
     let results = new Array<string>();
     // @ts-ignore
-    emitter.on('RStream', (bindings) => {
+    emitter.on('RStream', (object) => {
         console.log("received results");
-        results.push(bindings.toString());
+        results.push(object.bindings.toString());
     });
     if(stream1){
         generate_data(10, [stream1]);
