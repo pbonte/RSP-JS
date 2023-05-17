@@ -59,9 +59,9 @@ async function RSP() {
   let stream = rspEngine.getStream("https://rsp.js/stream1");
   let emitter = rspEngine.register();
   let results = new Array<string>();
-  emitter.on("RStream", (bindings: any) => {
+  emitter.on("RStream", (object: any) => {
     console.log("received results");
-    results.push(bindings.toString());
+    results.push(object.bindings.toString());
   });
   if (stream) {
     generate_data(10, [stream]);
