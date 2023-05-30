@@ -100,4 +100,12 @@ export class RSPEngine {
     addStaticData(static_data: Quad) {
         this.r2r.addStaticData(static_data);
     }
+
+    get_all_streams(){
+        let streams: string[] = [];
+        this.streams.forEach((stream) => {
+            streams.push(stream.name);
+        });
+        return streams;
+    }
 }
