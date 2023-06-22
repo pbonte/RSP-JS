@@ -163,3 +163,17 @@ test('test_get_all_streams', () => {
     expect(streams_registered.length).toBe(1);
     expect(streams_registered[0]).toBe("https://rsp.js/stream1");
 });
+test('test_get_all_windows', () => {
+    let query = `PREFIX : <https://rsp.js/>
+    REGISTER RStream <output> AS
+    SELECT *
+    FROM NAMED WINDOW :w1 ON STREAM :stream1 [RANGE 10 STEP 2]
+
+    WHERE{
+        ?o :hasInfo :someInfo.
+        WINDOW :w1 { ?s ?p ?o}
+    }`;
+    let rspEngine = new rsp_1.RSPEngine(query);
+    let windows_registered = rspEngine.get_all_windows();
+    console.log(windows_registered);
+});

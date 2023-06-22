@@ -42,5 +42,10 @@ export declare class CSPARQLWindow {
     add(e: Quad, timestamp: number): void;
     compute_report(w: WindowInstance, content: QuadContainer, timestamp: number): boolean;
     scope(t_e: number): void;
-    subscribe(output: 'RStream' | 'IStream' | 'DStream', call_back: (data: QuadContainer) => void): void;
+    subscribe(output: 'RStream' | 'IStream' | 'DStream', call_back: (data: container_with_bounds) => void): void;
 }
+export type container_with_bounds = {
+    data: QuadContainer | undefined;
+    from: number;
+    to: number;
+};

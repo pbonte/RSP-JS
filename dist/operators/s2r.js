@@ -111,7 +111,15 @@ class CSPARQLWindow {
             if (this.tick == Tick.TimeDriven) {
                 if (timestamp > this.time) {
                     this.time = timestamp;
-                    this.emitter.emit('RStream', this.active_windows.get(max_window));
+                    let container_with_bounds = {
+                        data: this.active_windows.get(max_window),
+                        // @ts-ignore
+                        from: max_window.open,
+                        // @ts-ignore
+                        to: max_window.close
+                    };
+                    // this.emitter.emit('RStream', this.active_windows.get(max_window));      
+                    this.emitter.emit('RStream', container_with_bounds);
                     // @ts-ignore
                     console.log("Window [" + max_window.open + "," + max_window.close + ") triggers. Content: " + this.active_windows.get(max_window));
                 }

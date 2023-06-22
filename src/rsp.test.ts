@@ -1,4 +1,4 @@
-import {RDFStream, RSPEngine} from "./rsp";
+import {binding_with_timestamp, RDFStream, RSPEngine} from "./rsp";
 const N3 = require('n3');
 
 const { DataFactory } = N3;
@@ -44,7 +44,7 @@ test('rsp_consumer_test', async () => {
     // @ts-ignore
     emitter.on('RStream', (object) => {
         console.log("received results");
-        results.push(object.bindings.toString());
+        results.push(object.bindings.toString());        
     });
     if(stream){
         generate_data(10, [stream]);
@@ -201,4 +201,21 @@ test('test_get_all_streams', () => {
     let streams_registered = rspEngine.get_all_streams();  
     expect(streams_registered.length).toBe(1);
     expect(streams_registered[0]).toBe("https://rsp.js/stream1");    
+})
+
+test('test_get_all_windows', () => {
+    let query = `PREFIX : <https://rsp.js/>
+    REGISTER RStream <output> AS
+    SELECT *
+    FROM NAMED WINDOW :w1 ON STREAM :stream1 [RANGE 10 STEP 2]
+
+    WHERE{
+        ?o :hasInfo :someInfo.
+        WINDOW :w1 { ?s ?p ?o}
+    }`;
+
+    let rspEngine = new RSPEngine(query);
+    let windows_registered = rspEngine.get_all_windows();   
+    console.log(windows_registered);
+    
 })

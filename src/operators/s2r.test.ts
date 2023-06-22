@@ -1,11 +1,11 @@
-import {CSPARQLWindow, QuadContainer, ReportStrategy, Tick, WindowInstance} from './s2r';
+import { container_with_bounds, CSPARQLWindow, QuadContainer, ReportStrategy, Tick, WindowInstance } from './s2r';
 
 const N3 = require('n3');
 
 const { DataFactory } = N3;
 const { namedNode, literal, defaultGraph, quad } = DataFactory;
 // @ts-ignore
-import {Quad} from 'n3';
+import { Quad } from 'n3';
 function generate_data(num_events: number, csparqlWindow: CSPARQLWindow) {
     for (let i = 0; i < num_events; i++) {
         const stream_element = quad(
@@ -44,25 +44,25 @@ test('create_graph_container', () => {
 
 test('add_to_window', () => {
     const quad1 = quad(
-            namedNode('https://rsp.js/test_subject_0'),
-            namedNode('http://rsp.js/test_property'),
-            namedNode('http://rsp.js/test_object'),
-            defaultGraph(),
+        namedNode('https://rsp.js/test_subject_0'),
+        namedNode('http://rsp.js/test_property'),
+        namedNode('http://rsp.js/test_object'),
+        defaultGraph(),
     );
     const quad2 = quad(
-            namedNode('https://rsp.js/test_subject_1'),
-            namedNode('http://rsp.js/test_property'),
-            namedNode('http://rsp.js/test_object'),
-            defaultGraph(),
+        namedNode('https://rsp.js/test_subject_1'),
+        namedNode('http://rsp.js/test_property'),
+        namedNode('http://rsp.js/test_object'),
+        defaultGraph(),
     );
 
-    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    let csparqlWindow = new CSPARQLWindow(":window1", 10, 2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
 
-    csparqlWindow.add(quad,0);
+    csparqlWindow.add(quad, 0);
 });
 
 test('test_scope', () => {
-    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    let csparqlWindow = new CSPARQLWindow(":window1", 10, 2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
     csparqlWindow.scope(4);
 
     let num_active_windows = csparqlWindow.active_windows.size;
@@ -79,7 +79,7 @@ test('test_scope', () => {
     expect(num_active_windows).toBe(6);
 });
 test('test_evictions', () => {
-    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    let csparqlWindow = new CSPARQLWindow(":window1", 10, 2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
 
     generate_data(10, csparqlWindow);
 
@@ -87,35 +87,37 @@ test('test_evictions', () => {
 });
 
 test('test_stream_consumer', () => {
-   let recevied_data = new Array<QuadContainer>();
-   let received_elementes = new Array<Quad>;
-    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    let recevied_data = new Array<QuadContainer>();
+    let received_elementes = new Array<Quad>;
+    let csparqlWindow = new CSPARQLWindow(":window1", 10, 2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
     // register window consumer
-    csparqlWindow.subscribe('RStream',function (data: QuadContainer) {
-        console.log('Foo raised, Args:', data);
-        console.log('dat size', data.elements.size);
-        recevied_data.push(data);
-        data.elements.forEach(item => received_elementes.push(item));
+    csparqlWindow.subscribe('RStream', function (container_bounds: container_with_bounds) {
+        let data = container_bounds.data;
+        if (data !== undefined) {
+            console.log('Foo raised, Args:', data);
+            console.log('data size', data.elements.size);
+            recevied_data.push(data);
+            data.elements.forEach(item => received_elementes.push(item));
+        }
     });
     // generate some data
     generate_data(10, csparqlWindow);
 
     expect(recevied_data.length).toBe(4);
-    expect(received_elementes.length).toBe(2+4+6+8);
+    expect(received_elementes.length).toBe(2 + 4 + 6 + 8);
 
 });
 
 test('test_content_get', () => {
-    let recevied_data = new Array<QuadContainer>();
-    let received_elementes = new Array<Quad>;
-    let csparqlWindow = new CSPARQLWindow(":window1",10,2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
+    let csparqlWindow = new CSPARQLWindow(":window1", 10, 2, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0);
 
     // generate some data
     generate_data(10, csparqlWindow);
 
     let content = csparqlWindow.getContent(10);
+
     expect(content).toBeDefined();
-    if(content) {
+    if (content) {
         expect(content.elements.size).toBe(10);
     }
     let undefinedContent = csparqlWindow.getContent(20);

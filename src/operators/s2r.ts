@@ -93,6 +93,7 @@ export class CSPARQLWindow {
         }
     }
 
+
     add(e: Quad, timestamp: number) {
         console.debug("Window " + this.name+ " Received element (" + e + "," + timestamp + ")");
         let toEvict = new Set<WindowInstance>();
@@ -130,8 +131,16 @@ export class CSPARQLWindow {
         if(max_window){
             if(this.tick == Tick.TimeDriven){
                 if(timestamp > this.time){
-                    this.time = timestamp;
-                    this.emitter.emit('RStream', this.active_windows.get(max_window));
+                    this.time = timestamp;        
+                    let container_with_bounds: container_with_bounds = {
+                        data: this.active_windows.get(max_window),
+                    // @ts-ignore
+                        from : max_window.open,
+                        // @ts-ignore
+                        to: max_window.close
+                    }            
+                    // this.emitter.emit('RStream', this.active_windows.get(max_window));      
+                    this.emitter.emit('RStream', container_with_bounds);              
                     // @ts-ignore
                     console.log("Window ["+ max_window.open + "," + max_window.close + ") triggers. Content: " + this.active_windows.get(max_window));
                 }
@@ -165,7 +174,7 @@ export class CSPARQLWindow {
 
     }
 
-    subscribe(output: 'RStream'|'IStream'|'DStream', call_back: (data: QuadContainer) => void) {
+    subscribe(output: 'RStream'|'IStream'|'DStream', call_back: (data: container_with_bounds) => void) {
         this.emitter.on(output,call_back);
     }
 }
@@ -182,5 +191,10 @@ function computeWindowIfAbsent(map: Map<WindowInstance, QuadContainer>, key: Win
         val = mappingFunction(key);
         map.set(key, val);
     }
+}
 
+export type container_with_bounds = {
+    data : QuadContainer | undefined,
+    from : number,
+    to: number
 }

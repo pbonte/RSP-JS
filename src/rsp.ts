@@ -1,4 +1,4 @@
-import { CSPARQLWindow, QuadContainer, ReportStrategy, Tick } from "./operators/s2r";
+import { container_with_bounds, CSPARQLWindow, QuadContainer, ReportStrategy, Tick } from "./operators/s2r";
 import { R2ROperator } from "./operators/r2r";
 import { EventEmitter } from "events";
 
@@ -60,33 +60,39 @@ export class RSPEngine {
         let EventEmitter = require('events').EventEmitter;
         let emitter = new EventEmitter();
         this.windows.forEach((window) => {
-            window.subscribe("RStream", async (data: QuadContainer) => {
-                console.log('Received window content', data);
-                // iterate over all the windows
-                for (let windowIt of this.windows) {
-                    // filter out the current triggering one
-                    if (windowIt != window) {
-                        let currentWindowData = windowIt.getContent(data.last_time_changed());
-                        if (currentWindowData) {
-                            // add the content of the other windows to the quad container
-                            currentWindowData.elements.forEach((q) => data.add(q, data.last_time_changed()));
+            console.log("Registering window", window.name);
+            window.subscribe("RStream", async (container_bounds: container_with_bounds) => {
+                let data = container_bounds.data;
+                if (data !== undefined) {
+                    console.log('Received window content', data);
+                    // iterate over all the windows
+                    for (let windowIt of this.windows) {
+                        // filter out the current triggering one
+                        if (windowIt != window) {
+                            let currentWindowData = windowIt.getContent(data.last_time_changed());
+                            if (currentWindowData) {
+                                // add the content of the other windows to the quad container
+                                // @ts-ignore
+                                currentWindowData.elements.forEach((q) => data.add(q, data.last_time_changed()));
+                            }
                         }
                     }
+                    let bindingsStream = await this.r2r.execute(data);
+                    bindingsStream.on('data', (binding: any) => {
+                        let object_with_timestamp: binding_with_timestamp = {
+                            bindings: binding,
+                            timestamp_from: container_bounds.from,
+                            timestamp_to: container_bounds.to
+                        }
+                        window.t0 += window.slide;
+                        emitter.emit("RStream", object_with_timestamp);
+                    });
+                    bindingsStream.on('end', () => {
+                        console.log("Ended stream");
+                    });
+                    await bindingsStream;
+
                 }
-                let bindingsStream = await this.r2r.execute(data);
-                bindingsStream.on('data', (binding: any) => {
-                    let object_with_timestamp:binding_with_timestamp = {
-                        bindings: binding,
-                        timestamp_from: window.t0,
-                        timestamp_to: window.t0 + window.slide
-                    }
-                    window.t0 += window.slide;
-                    emitter.emit("RStream", object_with_timestamp);
-                });
-                bindingsStream.on('end', () => {
-                    console.log("Ended stream");
-                });
-                await bindingsStream;
 
             })
         });
@@ -101,11 +107,15 @@ export class RSPEngine {
         this.r2r.addStaticData(static_data);
     }
 
-    get_all_streams(){
+    get_all_streams() {
         let streams: string[] = [];
         this.streams.forEach((stream) => {
             streams.push(stream.name);
         });
         return streams;
+    }
+
+    get_all_windows() {
+        return this.windows;
     }
 }
