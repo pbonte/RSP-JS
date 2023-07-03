@@ -1,6 +1,6 @@
 # RSP.js
 
-An RDF Stream Processing Library for Javascript built on top of [N3.js](https://github.com/rdfjs/N3.js/) and [Comunica](https://comunica.dev/)
+An RDF Stream Processing Library for Javascript built on top of [rdf-stores.js](https://github.com/rubensworks/rdf-stores.js/) and [Comunica](https://comunica.dev/)
 
 ## Installation
 
@@ -33,11 +33,14 @@ let rspEngine = new RSPEngine(query);
 You can add stream elements to the RSPEngine using the `add` method. The method takes in a stream element and a timestamp
 
 ```ts
+import { RdfStore } from "rdf-stores";
+import { DataFactory } from "rdf-data-factory";
+const DF = new DataFactory();
 stream.add(quad(
-                namedNode('https://rsp.js/test_subject_'),
-                namedNode('http://rsp.js/test_property'),
-                namedNode('http://rsp.js/test_object'),
-                defaultGraph(),
+                DF.namedNode('https://rsp.js/test_subject_'),
+                DF.namedNode('http://rsp.js/test_property'),
+                DF.namedNode('http://rsp.js/test_object'),
+                DF.defaultGraph(),
             ), timestamp_value);
 ```
 
@@ -73,18 +76,18 @@ RSP();
 ```
 
 ```ts
-const N3 = require("n3");
-const { DataFactory } = N3;
-const { namedNode, defaultGraph, quad } = DataFactory;
+import { RdfStore } from "rdf-stores";
+import { DataFactory } from "rdf-data-factory";
+const DF = new DataFactory();
 
 async function generate_data(num_events: number, rdfStreams: RDFStream[]) {
   for (let i = 0; i < num_events; i++) {
     rdfStreams.forEach((stream: any) => {
       const stream_element = quad(
-        namedNode("https://rsp.js/test_subject_" + i),
-        namedNode("http://rsp.js/test_property"),
-        namedNode("http://rsp.js/test_object"),
-        defaultGraph()
+        DF.namedNode("https://rsp.js/test_subject_" + i),
+        DF.namedNode("http://rsp.js/test_property"),
+        DF.namedNode("http://rsp.js/test_object"),
+        DF.defaultGraph()
       );
       stream.add(stream_element, i);
     });

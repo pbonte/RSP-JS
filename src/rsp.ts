@@ -2,9 +2,13 @@ import { container_with_bounds, CSPARQLWindow, QuadContainer, ReportStrategy, Ti
 import { R2ROperator } from "./operators/r2r";
 import { EventEmitter } from "events";
 
-const N3 = require('n3');
-const { DataFactory } = N3;
-const { namedNode, literal, defaultGraph, quad } = DataFactory;
+// const N3 = require('n3');
+// const { DataFactory } = N3;
+// const { namedNode} = DataFactory;
+
+import { RdfStore } from "rdf-stores";
+import { DataFactory } from "rdf-data-factory";
+const DF = new DataFactory();
 // @ts-ignore
 import { Quad } from 'n3';
 import { RSPQLParser, WindowDefinition } from "./rspql";
@@ -25,7 +29,7 @@ export class RDFStream {
         this.emitter = new EventEmitter();
         this.emitter.on('data', (quadcontainer: QuadContainer) => {
             // @ts-ignore
-            quadcontainer.elements._graph = namedNode(window.name);
+            quadcontainer.elements._graph = DF.namedNode(window.name);
             // @ts-ignore
             window.add(quadcontainer.elements, quadcontainer.last_time_changed());
         });
