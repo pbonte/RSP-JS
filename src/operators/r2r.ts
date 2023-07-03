@@ -1,31 +1,28 @@
-import {QuadContainer} from "./s2r";
+import { QuadContainer } from "./s2r";
 const N3 = require('n3');
-
-const { DataFactory } = N3;
-const { namedNode, literal, defaultGraph, quad } = DataFactory;
+import { RdfStore } from "rdf-stores";
+import { DataFactory } from "rdf-data-factory";
+const DF = new DataFactory();
 // @ts-ignore
-import {Quad} from 'n3';
-export class R2ROperator{
+export class R2ROperator {
     query: string;
-    staticData : Set<Quad>;
-    constructor(query: string){
+    staticData: Set<any>;
+    constructor(query: string) {
         this.query = query;
-        this.staticData = new Set<Quad>();
+        this.staticData = new Set<any>();
     }
-    addStaticData(quad: Quad){
+    addStaticData(quad: any) {
         this.staticData.add(quad);
     }
-    async execute(container: QuadContainer){
-        const store = new N3.Store();
-        for(let elem of container.elements){
+    async execute(container: QuadContainer) {
+        const store = RdfStore.createDefault();
+        for (let elem of container.elements) {
             store.addQuad(elem);
-
         }
-        for(let elem of this.staticData){
+        for (let elem of this.staticData) {
             store.addQuad(elem);
         }
         const QueryEngine = require('@comunica/query-sparql').QueryEngine;
-
         const myEngine = new QueryEngine();
         return await myEngine.queryBindings(this.query, {
             sources: [store],

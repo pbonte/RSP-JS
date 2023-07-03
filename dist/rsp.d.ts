@@ -22,4 +22,5 @@ export declare class RSPEngine {
     getStream(stream_name: string): RDFStream | undefined;
     addStaticData(static_data: Quad): void;
     get_all_streams(): string[];
+    get_all_windows(): CSPARQLWindow[];
 }

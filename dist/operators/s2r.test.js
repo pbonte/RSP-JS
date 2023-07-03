@@ -51,11 +51,14 @@ test('test_stream_consumer', () => {
     let received_elementes = new Array;
     let csparqlWindow = new s2r_1.CSPARQLWindow(":window1", 10, 2, s2r_1.ReportStrategy.OnWindowClose, s2r_1.Tick.TimeDriven, 0);
     // register window consumer
-    csparqlWindow.subscribe('RStream', function (data) {
-        console.log('Foo raised, Args:', data);
-        console.log('dat size', data.elements.size);
-        recevied_data.push(data);
-        data.elements.forEach(item => received_elementes.push(item));
+    csparqlWindow.subscribe('RStream', function (container_bounds) {
+        let data = container_bounds.data;
+        if (data !== undefined) {
+            console.log('Foo raised, Args:', data);
+            console.log('data size', data.elements.size);
+            recevied_data.push(data);
+            data.elements.forEach(item => received_elementes.push(item));
+        }
     });
     // generate some data
     generate_data(10, csparqlWindow);
@@ -63,8 +66,6 @@ test('test_stream_consumer', () => {
     expect(received_elementes.length).toBe(2 + 4 + 6 + 8);
 });
 test('test_content_get', () => {
-    let recevied_data = new Array();
-    let received_elementes = new Array;
     let csparqlWindow = new s2r_1.CSPARQLWindow(":window1", 10, 2, s2r_1.ReportStrategy.OnWindowClose, s2r_1.Tick.TimeDriven, 0);
     // generate some data
     generate_data(10, csparqlWindow);

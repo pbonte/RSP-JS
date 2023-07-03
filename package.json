@@ -1,6 +1,6 @@
 {
   "name": "rsp-js",
-  "version": "1.1.1",
+  "version": "1.1.2",
   "description": "",
   "types": "dist/index.d.ts",
   "main": "dist/index.js",
@@ -11,7 +11,12 @@
     "test:watch": "jest --watch",
     "release": "npm run build && npm publish --access public"
   },
-  "keywords": ["RSP", "RDF Stream Processing", "Semantic Web", "RDF"],
+  "keywords": [
+    "RSP",
+    "RDF Stream Processing",
+    "Semantic Web",
+    "RDF"
+  ],
   "author": "Pieter Bonte",
   "license": "MIT",
   "devDependencies": {
@@ -23,6 +28,7 @@
   },
   "dependencies": {
     "@comunica/query-sparql": "^2.5.2",
-    "n3": "^1.16.3"
+    "n3": "^1.16.3",
+    "rdf-stores": "^1.0.0"
   }
 }
