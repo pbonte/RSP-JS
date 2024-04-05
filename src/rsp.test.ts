@@ -1,4 +1,4 @@
-import {RDFStream, RSPEngine} from "./rsp";
+import { RDFStream, RSPEngine } from "./rsp";
 const N3 = require('n3');
 
 const { DataFactory } = N3;
@@ -7,14 +7,15 @@ const { namedNode, defaultGraph, quad } = DataFactory;
 function generate_data(num_events: number, rdfStreams: RDFStream[]) {
     for (let i = 0; i < num_events; i++) {
 
-        rdfStreams.forEach((stream)=>{
+        rdfStreams.forEach((stream) => {
             const stream_element = quad(
                 namedNode('https://rsp.js/test_subject_' + i),
                 namedNode('http://rsp.js/test_property'),
                 namedNode('http://rsp.js/test_object'),
                 defaultGraph(),
             );
-            stream.add(stream_element, i);});
+            stream.add(stream_element, i);
+        });
     }
 }
 function generate_data2(num_events: number, rdfStream: RDFStream) {
@@ -37,16 +38,17 @@ test('rsp_consumer_test', async () => {
         WINDOW :w1 { ?s ?p ?o}
     }`;
 
-    let rspEngine = new RSPEngine(query);
-    let stream= rspEngine.getStream("https://rsp.js/stream1");
-    let emitter = rspEngine.register();
+    let rspEngine = new RSPEngine();
+    rspEngine.addQuery(query);
+    let stream = rspEngine.get_stream(query, "https://rsp.js/stream1");
+    let emitter = rspEngine.register(query);
     let results = new Array<string>();
     // @ts-ignore
     emitter.on('RStream', (object) => {
         console.log("received results");
         results.push(object.bindings.toString());
     });
-    if(stream){
+    if (stream) {
         generate_data(10, [stream]);
     }
 
@@ -55,7 +57,7 @@ test('rsp_consumer_test', async () => {
     await sleep(2000);
 
 
-    expect(results.length).toBe(2+4+6+8);
+    expect(results.length).toBe(2 + 4 + 6 + 8);
     console.log(results);
 });
 test('rsp_multiple_same_window_test', async () => {
@@ -70,18 +72,19 @@ test('rsp_multiple_same_window_test', async () => {
         WINDOW :w2 { ?s ?p ?o}
     }`;
 
-    let rspEngine = new RSPEngine(query);
-    let stream1 = rspEngine.getStream("https://rsp.js/stream1");
-    let stream2 = rspEngine.getStream("https://rsp.js/stream2");
+    let rspEngine = new RSPEngine();
+    rspEngine.addQuery(query);
+    let stream1 = rspEngine.get_stream(query, "https://rsp.js/stream1");
+    let stream2 = rspEngine.get_stream(query, "https://rsp.js/stream2");
 
-    let emitter = rspEngine.register();
+    let emitter = rspEngine.register(query);
     let results = new Array<string>();
     // @ts-ignore
     emitter.on('RStream', (object) => {
         console.log("received results");
         results.push(object.bindings.toString());
     });
-    if(stream1 && stream2){
+    if (stream1 && stream2) {
         generate_data(10, [stream1, stream2]);
     }
 
@@ -90,7 +93,7 @@ test('rsp_multiple_same_window_test', async () => {
     await sleep(1000);
 
 
-    expect(results.length).toBe(2*(2+4+6+8));
+    expect(results.length).toBe(2 * (2 + 4 + 6 + 8));
     console.log(results);
 });
 
@@ -106,18 +109,19 @@ test('rsp_multiple_difff_window_test', async () => {
         WINDOW :w2 { ?s ?p2 ?o2}
     }`;
 
-    let rspEngine = new RSPEngine(query);
-    let stream1 = rspEngine.getStream("https://rsp.js/stream1");
-    let stream2 = rspEngine.getStream("https://rsp.js/stream2");
+    let rspEngine = new RSPEngine();
+    rspEngine.addQuery(query);
+    let stream1 = rspEngine.get_stream(query, "https://rsp.js/stream1");
+    let stream2 = rspEngine.get_stream(query, "https://rsp.js/stream2");
 
-    let emitter = rspEngine.register();
+    let emitter = rspEngine.register(query);
     let results = new Array<string>();
     // @ts-ignore
     emitter.on('RStream', (object) => {
         console.log("received results");
         results.push(object.bindings.toString());
     });
-    if(stream1 && stream2){
+    if (stream1 && stream2) {
         for (let i = 0; i < 10; i++) {
             const stream_element = quad(
                 namedNode('https://rsp.js/test_subject_' + i),
@@ -141,7 +145,7 @@ test('rsp_multiple_difff_window_test', async () => {
     await sleep(2000);
 
 
-    expect(results.length).toBe(2+4+6+8);
+    expect(results.length).toBe(2 + 4 + 6 + 8);
     console.log(results);
 });
 test('rsp_static_plus_window_test', async () => {
@@ -155,25 +159,27 @@ test('rsp_static_plus_window_test', async () => {
         WINDOW :w1 { ?s ?p ?o}
     }`;
 
-    let rspEngine = new RSPEngine(query);
+    let rspEngine = new RSPEngine();
+    rspEngine.addQuery(query);
+    let emitter = rspEngine.register(query);
     const static_data = quad(
         namedNode('http://rsp.js/test_object'),
         namedNode('https://rsp.js/hasInfo'),
         namedNode('https://rsp.js/someInfo'),
         defaultGraph(),
     );
-    rspEngine.addStaticData(static_data);
+    rspEngine.add_static_data(query, static_data);
 
-    let stream1 = rspEngine.getStream("https://rsp.js/stream1");
+    let stream1 = rspEngine.get_stream(query, "https://rsp.js/stream1");
 
-    let emitter = rspEngine.register();
     let results = new Array<string>();
-    // @ts-ignore
+    // @ts-ignore    
+
     emitter.on('RStream', (object) => {
         console.log("received results");
         results.push(object.bindings.toString());
     });
-    if(stream1){
+    if (stream1) {
         generate_data(10, [stream1]);
     }
 
@@ -182,7 +188,7 @@ test('rsp_static_plus_window_test', async () => {
     await sleep(1000);
 
 
-    expect(results.length).toBe(2+4+6+8);
+    expect(results.length).toBe(2 + 4 + 6 + 8);
     console.log(results);
 });
 
@@ -197,8 +203,11 @@ test('test_get_all_streams', () => {
         WINDOW :w1 { ?s ?p ?o}
     }`;
 
-    let rspEngine = new RSPEngine(query);
-    let streams_registered = rspEngine.get_all_streams();  
-    expect(streams_registered.length).toBe(1);
-    expect(streams_registered[0]).toBe("https://rsp.js/stream1");    
-})
+    let rspEngine = new RSPEngine();
+    rspEngine.addQuery(query);
+    let streams_registered = rspEngine.get_all_streams(query);
+    if (streams_registered) {
+        expect(streams_registered.length).toBe(1);
+        expect(streams_registered[0]).toBe("https://rsp.js/stream1");
+    }
+});
