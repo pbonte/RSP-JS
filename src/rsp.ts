@@ -73,7 +73,7 @@ export class RSPEngine {
         let query_resources = this.queries.get(query);
         if (!query_resources) {
             console.log(`The query ${query} is not registered in the engine`);
-            return false;
+            return null;
         }
 
         let { windows, streams, r2r } = query_resources;
@@ -91,9 +91,9 @@ export class RSPEngine {
                             })
                         }
                     }
-                }
+                }                
                 let binding_stream = await r2r.execute(data);
-                binding_stream.on('data', (binding: any) => {
+                binding_stream.on('data', (binding: any) => {                    
                     let binding_with_timestamp: binding_with_timestamp = {
                         bindings: binding,
                         timestamp_from: window.t0,
