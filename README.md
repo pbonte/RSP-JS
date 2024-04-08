@@ -55,9 +55,10 @@ async function RSP() {
         WINDOW :w1 { ?s ?p ?o}
     }`;
 
-  let rspEngine = new RSPEngine(query);
+  let rspEngine = new RSPEngine();
+  rspEngine.addQuery(query);
   let stream = rspEngine.getStream("https://rsp.js/stream1");
-  let emitter = rspEngine.register();
+  let emitter = rspEngine.register(query);
   let results = new Array<string>();
   emitter.on("RStream", (object: any) => {
     console.log("received results");
@@ -97,3 +98,7 @@ async function generate_data(num_events: number, rdfStreams: RDFStream[]) {
 - RSP-QL support
 - Support multiple windows
 - Support for stream and static data joins
+
+## Contact
+
+For any questions, please open a Github issue on the repository.
