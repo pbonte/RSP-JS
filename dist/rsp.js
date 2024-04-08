@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RSPEngine = exports.RDFStream = void 0;
 const s2r_1 = require("./operators/s2r");
 const r2r_1 = require("./operators/r2r");
+const events_1 = require("events");
 const N3 = require('n3');
 const { DataFactory } = N3;
 const { namedNode, literal, defaultGraph, quad } = DataFactory;
@@ -34,63 +35,89 @@ class RDFStream {
 }
 exports.RDFStream = RDFStream;
 class RSPEngine {
-    constructor(query) {
-        this.windows = new Array();
-        this.streams = new Map();
-        let parser = new rspql_1.RSPQLParser();
-        let parsed_query = parser.parse(query);
-        parsed_query.s2r.forEach((window) => {
-            let windowImpl = new s2r_1.CSPARQLWindow(window.window_name, window.width, window.slide, s2r_1.ReportStrategy.OnWindowClose, s2r_1.Tick.TimeDriven, 0);
-            this.windows.push(windowImpl);
-            let stream = new RDFStream(window.stream_name, windowImpl);
-            this.streams.set(window.stream_name, stream);
-        });
-        this.r2r = new r2r_1.R2ROperator(parsed_query.sparql);
+    constructor() {
+        this.queries = new Map();
     }
-    register() {
-        let EventEmitter = require('events').EventEmitter;
-        let emitter = new EventEmitter();
-        this.windows.forEach((window) => {
+    addQuery(query) {
+        let windows = new Array();
+        let streams = new Map();
+        const parser = new rspql_1.RSPQLParser();
+        const parsed_query = parser.parse(query);
+        parsed_query.s2r.forEach((window) => {
+            let window_implementation = new s2r_1.CSPARQLWindow(window.window_name, window.width, window.slide, s2r_1.ReportStrategy.OnWindowClose, s2r_1.Tick.TimeDriven, 0);
+            windows.push(window_implementation);
+            let stream = new RDFStream(window.stream_name, window_implementation);
+            streams.set(window.stream_name, stream);
+        });
+        let r2r = new r2r_1.R2ROperator(parsed_query.sparql);
+        this.queries.set(query, { windows, streams, r2r });
+    }
+    removeQuery(query) {
+        this.queries.delete(query);
+    }
+    register(query) {
+        let query_resources = this.queries.get(query);
+        if (!query_resources) {
+            console.log(`The query ${query} is not registered in the engine`);
+            return null;
+        }
+        let { windows, streams, r2r } = query_resources;
+        let emitter = new events_1.EventEmitter();
+        windows.forEach((window) => {
             window.subscribe("RStream", (data) => __awaiter(this, void 0, void 0, function* () {
-                console.log('Received window content', data);
-                // iterate over all the windows
-                for (let windowIt of this.windows) {
-                    // filter out the current triggering one
-                    if (windowIt != window) {
-                        let currentWindowData = windowIt.getContent(data.last_time_changed());
-                        if (currentWindowData) {
-                            // add the content of the other windows to the quad container
-                            currentWindowData.elements.forEach((q) => data.add(q, data.last_time_changed()));
+                console.log(`Receievd window content`, data);
+                for (let window_iterator of windows) {
+                    if (window_iterator != window) {
+                        let current_window_data = window_iterator.getContent(data.last_time_changed());
+                        if (current_window_data) {
+                            current_window_data.elements.forEach((quad) => {
+                                data.add(quad, data.last_time_changed());
+                            });
                         }
                     }
                 }
-                let bindingsStream = yield this.r2r.execute(data);
-                bindingsStream.on('data', (binding) => {
-                    let object_with_timestamp = {
+                let binding_stream = yield r2r.execute(data);
+                binding_stream.on('data', (binding) => {
+                    let binding_with_timestamp = {
                         bindings: binding,
                         timestamp_from: window.t0,
-                        timestamp_to: window.t0 + window.slide
+                        timestamp_to: window.t0 + window.width
                     };
                     window.t0 += window.slide;
-                    emitter.emit("RStream", object_with_timestamp);
+                    emitter.emit('RStream', binding_with_timestamp);
                 });
-                bindingsStream.on('end', () => {
-                    console.log("Ended stream");
+                binding_stream.on('end', () => {
+                    console.log(`End of the stream`);
                 });
-                yield bindingsStream;
+                yield binding_stream;
             }));
         });
         return emitter;
     }
-    getStream(stream_name) {
-        return this.streams.get(stream_name);
+    get_stream(query, stream_name) {
+        let query_resources = this.queries.get(query);
+        if (!query_resources) {
+            console.log(`The query ${query} is not registered in the engine`);
+            return;
+        }
+        return query_resources.streams.get(stream_name);
     }
-    addStaticData(static_data) {
-        this.r2r.addStaticData(static_data);
+    add_static_data(query, static_data) {
+        let query_resources = this.queries.get(query);
+        if (!query_resources) {
+            console.log(`The query ${query} is not registered in the engine`);
+            return;
+        }
+        query_resources.r2r.addStaticData(static_data);
     }
-    get_all_streams() {
+    get_all_streams(query) {
+        let query_resources = this.queries.get(query);
+        if (!query_resources) {
+            console.log(`The query ${query} is not registered in the engine`);
+            return;
+        }
         let streams = [];
-        this.streams.forEach((stream) => {
+        query_resources.streams.forEach((stream) => {
             streams.push(stream.name);
         });
         return streams;

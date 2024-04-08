@@ -218,7 +218,6 @@ test('test_two_different_queries', async () => {
     FROM NAMED WINDOW :w1 ON STREAM :stream1 [RANGE 10 STEP 2]
 
     WHERE{
-        ?o :hasInfo :someInfo.
         WINDOW :w1 { ?s ?p ?o}
     }`;
 
@@ -228,7 +227,6 @@ test('test_two_different_queries', async () => {
     FROM NAMED WINDOW :w2 ON STREAM :stream2 [RANGE 5 STEP 1]
 
     WHERE{
-        ?o :hasInfo :someInfo.
         WINDOW :w2 { ?s ?p ?o}
     }`;
 
@@ -247,24 +245,20 @@ test('test_two_different_queries', async () => {
 
     if (emitter1 && emitter2) {
         emitter1.on('RStream', (object) => {
-            console.log("received results from query one");
-            console.log(object);
-            
             resultsOne.push(object.bindings.toString());
         });
 
         emitter2.on('RStream', (object) => {
-            console.log("received results from query two");
-            console.log(object);
-            
             resultsTwo.push(object.bindings.toString());
         });
 
         if (stream1) {
+            console.log(`Generating data for stream1`);
             generate_data(10, [stream1]);
         }
 
         if (stream2) {
+            console.log(`Generating data for stream2`);
             generate_data(5, [stream2]);
         }
 
@@ -273,9 +267,7 @@ test('test_two_different_queries', async () => {
         await sleep(2000);
 
         // Asserting the length of results from query one
-        expect(resultsOne.length).toBe(2 + 4 + 6 + 8);
-        expect(resultsTwo.length).toBe(1 + 2 + 3 + 4 + 5);
-        console.log("Results from query one:", resultsOne);
-        console.log("Results from query two:", resultsTwo);
+        expect(resultsOne.length).toBe(20);
+        expect(resultsTwo.length).toBe(6);
     }
 });

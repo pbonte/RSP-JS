@@ -1,5 +1,6 @@
 /// <reference types="node" />
 import { CSPARQLWindow } from "./operators/s2r";
+import { R2ROperator } from "./operators/r2r";
 import { EventEmitter } from "events";
 import { Quad } from 'n3';
 export type binding_with_timestamp = {
@@ -14,12 +15,16 @@ export declare class RDFStream {
     add(event: Set<Quad>, ts: number): void;
 }
 export declare class RSPEngine {
-    windows: Array<CSPARQLWindow>;
-    streams: Map<string, RDFStream>;
-    private r2r;
-    constructor(query: string);
-    register(): any;
-    getStream(stream_name: string): RDFStream | undefined;
-    addStaticData(static_data: Quad): void;
-    get_all_streams(): string[];
+    queries: Map<string, {
+        windows: Array<CSPARQLWindow>;
+        streams: Map<string, RDFStream>;
+        r2r: R2ROperator;
+    }>;
+    constructor();
+    addQuery(query: string): void;
+    removeQuery(query: string): void;
+    register(query: string): EventEmitter | null;
+    get_stream(query: string, stream_name: string): RDFStream | undefined;
+    add_static_data(query: string, static_data: Quad): void;
+    get_all_streams(query: string): string[] | undefined;
 }

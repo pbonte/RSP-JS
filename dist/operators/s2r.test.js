@@ -53,7 +53,7 @@ test('test_stream_consumer', () => {
     // register window consumer
     csparqlWindow.subscribe('RStream', function (data) {
         console.log('Foo raised, Args:', data);
-        console.log('dat size', data.elements.size);
+        console.log('data size', data.elements.size);
         recevied_data.push(data);
         data.elements.forEach(item => received_elementes.push(item));
     });

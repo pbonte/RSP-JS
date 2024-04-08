@@ -25,7 +25,6 @@ export class R2ROperator{
             store.addQuad(elem);
         }
         const QueryEngine = require('@comunica/query-sparql').QueryEngine;
-
         const myEngine = new QueryEngine();
         return await myEngine.queryBindings(this.query, {
             sources: [store],
