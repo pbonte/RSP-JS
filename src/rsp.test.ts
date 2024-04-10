@@ -4,6 +4,12 @@ const N3 = require('n3');
 const { DataFactory } = N3;
 const { namedNode, defaultGraph, quad } = DataFactory;
 
+/**
+ * Generate data for the test.
+ * @param {number} num_events - The number of events to generate.
+ * @param {RDFStream[]} rdfStreams - The RDF streams to add the data to.
+ * @returns {void} - Nothing.
+ */
 function generate_data(num_events: number, rdfStreams: RDFStream[]) {
     for (let i = 0; i < num_events; i++) {
         rdfStreams.forEach((stream) => {
@@ -17,19 +23,9 @@ function generate_data(num_events: number, rdfStreams: RDFStream[]) {
         });
     }
 }
-function generate_data2(num_events: number, rdfStream: RDFStream) {
-    for (let i = 0; i < num_events; i++) {
-        const stream_element = quad(
-            namedNode('https://rsp.js/test_subject_' + i),
-            namedNode('http://rsp.js/test_property2'),
-            namedNode('http://rsp.js/test_object2'),
-            defaultGraph(),
-        );
-        rdfStream.add(stream_element, i);
-    }
-}
+
 test('rsp_consumer_test', async () => {
-    let query = `PREFIX : <https://rsp.js/>
+    const query = `PREFIX : <https://rsp.js/>
     REGISTER RStream <output> AS
     SELECT *
     FROM NAMED WINDOW :w1 ON STREAM :stream1 [RANGE 10 STEP 2]
@@ -37,11 +33,11 @@ test('rsp_consumer_test', async () => {
         WINDOW :w1 { ?s ?p ?o}
     }`;
 
-    let rspEngine = new RSPEngine();
+    const rspEngine = new RSPEngine();
     rspEngine.addQuery(query);
-    let stream = rspEngine.get_stream(query, "https://rsp.js/stream1");
-    let emitter = rspEngine.register(query);
-    let results = new Array<string>();
+    const stream = rspEngine.get_stream(query, "https://rsp.js/stream1");
+    const emitter = rspEngine.register(query);
+    const results = new Array<string>();
     // @ts-ignore
     emitter.on('RStream', (object) => {
         console.log("received results");
@@ -60,7 +56,7 @@ test('rsp_consumer_test', async () => {
     console.log(results);
 });
 test('rsp_multiple_same_window_test', async () => {
-    let query = `PREFIX : <https://rsp.js/>
+    const query = `PREFIX : <https://rsp.js/>
     REGISTER RStream <output> AS
     SELECT *
     FROM NAMED WINDOW :w1 ON STREAM :stream1 [RANGE 10 STEP 2]
@@ -71,13 +67,13 @@ test('rsp_multiple_same_window_test', async () => {
         WINDOW :w2 { ?s ?p ?o}
     }`;
 
-    let rspEngine = new RSPEngine();
+    const rspEngine = new RSPEngine();
     rspEngine.addQuery(query);
-    let stream1 = rspEngine.get_stream(query, "https://rsp.js/stream1");
-    let stream2 = rspEngine.get_stream(query, "https://rsp.js/stream2");
+    const stream1 = rspEngine.get_stream(query, "https://rsp.js/stream1");
+    const stream2 = rspEngine.get_stream(query, "https://rsp.js/stream2");
 
-    let emitter = rspEngine.register(query);
-    let results = new Array<string>();
+    const emitter = rspEngine.register(query);
+    const results = new Array<string>();
     // @ts-ignore
     emitter.on('RStream', (object) => {
         console.log("received results");
@@ -97,7 +93,7 @@ test('rsp_multiple_same_window_test', async () => {
 });
 
 test('rsp_multiple_difff_window_test', async () => {
-    let query = `PREFIX : <https://rsp.js/>
+    const query = `PREFIX : <https://rsp.js/>
     REGISTER RStream <output> AS
     SELECT *
     FROM NAMED WINDOW :w1 ON STREAM :stream1 [RANGE 10 STEP 2]
@@ -108,13 +104,13 @@ test('rsp_multiple_difff_window_test', async () => {
         WINDOW :w2 { ?s ?p2 ?o2}
     }`;
 
-    let rspEngine = new RSPEngine();
+    const rspEngine = new RSPEngine();
     rspEngine.addQuery(query);
-    let stream1 = rspEngine.get_stream(query, "https://rsp.js/stream1");
-    let stream2 = rspEngine.get_stream(query, "https://rsp.js/stream2");
+    const stream1 = rspEngine.get_stream(query, "https://rsp.js/stream1");
+    const stream2 = rspEngine.get_stream(query, "https://rsp.js/stream2");
 
-    let emitter = rspEngine.register(query);
-    let results = new Array<string>();
+    const emitter = rspEngine.register(query);
+    const results = new Array<string>();
     // @ts-ignore
     emitter.on('RStream', (object) => {
         console.log("received results");
@@ -148,7 +144,7 @@ test('rsp_multiple_difff_window_test', async () => {
     console.log(results);
 });
 test('rsp_static_plus_window_test', async () => {
-    let query = `PREFIX : <https://rsp.js/>
+    const query = `PREFIX : <https://rsp.js/>
     REGISTER RStream <output> AS
     SELECT *
     FROM NAMED WINDOW :w1 ON STREAM :stream1 [RANGE 10 STEP 2]
@@ -158,9 +154,9 @@ test('rsp_static_plus_window_test', async () => {
         WINDOW :w1 { ?s ?p ?o}
     }`;
 
-    let rspEngine = new RSPEngine();
+    const rspEngine = new RSPEngine();
     rspEngine.addQuery(query);
-    let emitter = rspEngine.register(query);
+    const emitter = rspEngine.register(query);
     const static_data = quad(
         namedNode('http://rsp.js/test_object'),
         namedNode('https://rsp.js/hasInfo'),
@@ -169,9 +165,9 @@ test('rsp_static_plus_window_test', async () => {
     );
     rspEngine.add_static_data(query, static_data);
 
-    let stream1 = rspEngine.get_stream(query, "https://rsp.js/stream1");
+    const stream1 = rspEngine.get_stream(query, "https://rsp.js/stream1");
 
-    let results = new Array<string>();
+    const results = new Array<string>();
     // @ts-ignore    
 
     emitter.on('RStream', (object) => {
@@ -192,7 +188,7 @@ test('rsp_static_plus_window_test', async () => {
 });
 
 test('test_get_all_streams', () => {
-    let query = `PREFIX : <https://rsp.js/>
+    const query = `PREFIX : <https://rsp.js/>
     REGISTER RStream <output> AS
     SELECT *
     FROM NAMED WINDOW :w1 ON STREAM :stream1 [RANGE 10 STEP 2]
@@ -202,9 +198,9 @@ test('test_get_all_streams', () => {
         WINDOW :w1 { ?s ?p ?o}
     }`;
 
-    let rspEngine = new RSPEngine();
+    const rspEngine = new RSPEngine();
     rspEngine.addQuery(query);
-    let streams_registered = rspEngine.get_all_streams(query);
+    const streams_registered = rspEngine.get_all_streams(query);
     if (streams_registered) {
         expect(streams_registered.length).toBe(1);
         expect(streams_registered[0]).toBe("https://rsp.js/stream1");
@@ -212,7 +208,7 @@ test('test_get_all_streams', () => {
 });
 
 test('test_two_different_queries', async () => {
-    let query_one = `PREFIX : <https://rsp.js/>
+    const query_one = `PREFIX : <https://rsp.js/>
     REGISTER RStream <output_one> AS
     SELECT *
     FROM NAMED WINDOW :w1 ON STREAM :stream1 [RANGE 10 STEP 2]
@@ -221,7 +217,7 @@ test('test_two_different_queries', async () => {
         WINDOW :w1 { ?s ?p ?o}
     }`;
 
-    let query_two = `PREFIX : <https://rsp.js/>
+    const query_two = `PREFIX : <https://rsp.js/>
     REGISTER RStream <output_two> AS
     SELECT ?s ?p ?o
     FROM NAMED WINDOW :w2 ON STREAM :stream2 [RANGE 5 STEP 1]
@@ -230,18 +226,18 @@ test('test_two_different_queries', async () => {
         WINDOW :w2 { ?s ?p ?o}
     }`;
 
-    let rspEngine = new RSPEngine();
+    const rspEngine = new RSPEngine();
     rspEngine.addQuery(query_one);
     rspEngine.addQuery(query_two);
 
-    let stream1 = rspEngine.get_stream(query_one, "https://rsp.js/stream1");
-    let stream2 = rspEngine.get_stream(query_two, "https://rsp.js/stream2");
+    const stream1 = rspEngine.get_stream(query_one, "https://rsp.js/stream1");
+    const stream2 = rspEngine.get_stream(query_two, "https://rsp.js/stream2");
 
-    let emitter1 = rspEngine.register(query_one);
-    let emitter2 = rspEngine.register(query_two);
+    const emitter1 = rspEngine.register(query_one);
+    const emitter2 = rspEngine.register(query_two);
 
-    let resultsOne: any[] = [];
-    let resultsTwo: any[] = [];
+    const resultsOne: any[] = [];
+    const resultsTwo: any[] = [];
 
     if (emitter1 && emitter2) {
         emitter1.on('RStream', (object) => {
