@@ -1,7 +1,8 @@
 import { CSPARQLWindow, QuadContainer, ReportStrategy, Tick } from "./operators/s2r";
 import { R2ROperator } from "./operators/r2r";
 import { EventEmitter } from "events";
-
+import * as LOG_CONFIG from "./config/log_config.json";
+import { LogDestination, LogLevel, Logger } from "./util/Logger";
 const N3 = require('n3');
 const { DataFactory } = N3;
 const { namedNode, literal, defaultGraph, quad } = DataFactory;
@@ -40,10 +41,13 @@ export class RSPEngine {
     windows: Array<CSPARQLWindow>;
     streams: Map<string, RDFStream>;
     private r2r: R2ROperator;
+    private logger: Logger;
 
     constructor(query: string) {
         this.windows = new Array<CSPARQLWindow>();
         this.streams = new Map<string, RDFStream>();
+        const logLevel: LogLevel = LogLevel[LOG_CONFIG.log_level as keyof typeof LogLevel];        
+        this.logger = new Logger(logLevel, LOG_CONFIG.classes_to_log, LOG_CONFIG.destination as unknown as LogDestination);
         let parser = new RSPQLParser();
         let parsed_query = parser.parse(query);
         parsed_query.s2r.forEach((window: WindowDefinition) => {
@@ -61,7 +65,7 @@ export class RSPEngine {
         let emitter = new EventEmitter();
         this.windows.forEach((window) => {
             window.subscribe("RStream", async (data: QuadContainer) => {
-                console.log('Received window content', data);
+                this.logger.info(`Received window content ${data} for time ${data.last_time_changed()}`, `RSPEngine`);
                 // iterate over all the windows
                 for (let windowIt of this.windows) {
                     // filter out the current triggering one
@@ -73,9 +77,10 @@ export class RSPEngine {
                         }
                     }
                 }
+                this.logger.info(`Starting Window Query Processing for the window time ${data.last_time_stamp_changed}`, `RSPEngine`);
                 let bindingsStream = await this.r2r.execute(data);
                 bindingsStream.on('data', (binding: any) => {
-                    let object_with_timestamp:binding_with_timestamp = {
+                    let object_with_timestamp: binding_with_timestamp = {
                         bindings: binding,
                         timestamp_from: window.t0,
                         timestamp_to: window.t0 + window.slide
@@ -84,10 +89,9 @@ export class RSPEngine {
                     emitter.emit("RStream", object_with_timestamp);
                 });
                 bindingsStream.on('end', () => {
-                    console.log("Ended stream");
+                    this.logger.info(`Ended Comunica Binding Stream for window time ${data.last_time_changed()}`, `RSPEngine`);
                 });
                 await bindingsStream;
-
             })
         });
         return emitter;
@@ -101,7 +105,7 @@ export class RSPEngine {
         this.r2r.addStaticData(static_data);
     }
 
-    get_all_streams(){
+    get_all_streams() {
         let streams: string[] = [];
         this.streams.forEach((stream) => {
             streams.push(stream.name);
