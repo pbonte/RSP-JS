@@ -10,9 +10,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.R2ROperator = void 0;
+const rdf_data_factory_1 = require("rdf-data-factory");
 const N3 = require('n3');
-const { DataFactory } = N3;
-const { namedNode, literal, defaultGraph, quad } = DataFactory;
+const DF = new rdf_data_factory_1.DataFactory();
 class R2ROperator {
     constructor(query) {
         this.query = query;
@@ -34,6 +34,23 @@ class R2ROperator {
             const myEngine = new QueryEngine();
             return yield myEngine.queryBindings(this.query, {
                 sources: [store],
+                extensionFunctions: {
+                    'http://extension.org/functions#sqrt'(args) {
+                        const arg = args[0];
+                        if (arg.termType === 'Literal') {
+                            return DF.literal(Math.sqrt(Number(arg.value)).toString());
+                        }
+                    },
+                    'http://extension.org/functions#pow'(args) {
+                        const arg1 = args[0];
+                        if (arg1.termType === 'Literal') {
+                            const arg2 = args[1];
+                            if (arg2.termType === 'Literal') {
+                                return DF.literal(Math.pow(Number(arg1.value), Number(arg2.value)).toString());
+                            }
+                        }
+                    }
+                },
             });
         });
     }

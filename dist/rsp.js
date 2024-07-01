@@ -1,4 +1,27 @@
 "use strict";
+var __createBinding = (this && this.__createBinding) || (Object.create ? (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    var desc = Object.getOwnPropertyDescriptor(m, k);
+    if (!desc || ("get" in desc ? !m.__esModule : desc.writable || desc.configurable)) {
+      desc = { enumerable: true, get: function() { return m[k]; } };
+    }
+    Object.defineProperty(o, k2, desc);
+}) : (function(o, m, k, k2) {
+    if (k2 === undefined) k2 = k;
+    o[k2] = m[k];
+}));
+var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (function(o, v) {
+    Object.defineProperty(o, "default", { enumerable: true, value: v });
+}) : function(o, v) {
+    o["default"] = v;
+});
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -12,6 +35,8 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.RSPEngine = exports.RDFStream = void 0;
 const s2r_1 = require("./operators/s2r");
 const r2r_1 = require("./operators/r2r");
+const LOG_CONFIG = __importStar(require("./config/log_config.json"));
+const Logger_1 = require("./util/Logger");
 const N3 = require('n3');
 const { DataFactory } = N3;
 const { namedNode, literal, defaultGraph, quad } = DataFactory;
@@ -37,10 +62,12 @@ class RSPEngine {
     constructor(query) {
         this.windows = new Array();
         this.streams = new Map();
+        const logLevel = Logger_1.LogLevel[LOG_CONFIG.log_level];
+        this.logger = new Logger_1.Logger(logLevel, LOG_CONFIG.classes_to_log, LOG_CONFIG.destination);
         let parser = new rspql_1.RSPQLParser();
         let parsed_query = parser.parse(query);
         parsed_query.s2r.forEach((window) => {
-            let windowImpl = new s2r_1.CSPARQLWindow(window.window_name, window.width, window.slide, s2r_1.ReportStrategy.OnWindowClose, s2r_1.Tick.TimeDriven, 0);
+            let windowImpl = new s2r_1.CSPARQLWindow(window.window_name, window.width, window.slide, s2r_1.ReportStrategy.OnWindowClose, s2r_1.Tick.TimeDriven, 0, 60000);
             this.windows.push(windowImpl);
             let stream = new RDFStream(window.stream_name, windowImpl);
             this.streams.set(window.stream_name, stream);
@@ -52,7 +79,7 @@ class RSPEngine {
         let emitter = new EventEmitter();
         this.windows.forEach((window) => {
             window.subscribe("RStream", (data) => __awaiter(this, void 0, void 0, function* () {
-                console.log('Received window content', data);
+                this.logger.info(`Received window content ${data} for time ${data.last_time_changed()}`, `RSPEngine`);
                 // iterate over all the windows
                 for (let windowIt of this.windows) {
                     // filter out the current triggering one
@@ -64,6 +91,7 @@ class RSPEngine {
                         }
                     }
                 }
+                this.logger.info(`Starting Window Query Processing for the window time ${data.last_time_stamp_changed}`, `RSPEngine`);
                 let bindingsStream = yield this.r2r.execute(data);
                 bindingsStream.on('data', (binding) => {
                     let object_with_timestamp = {
@@ -75,7 +103,7 @@ class RSPEngine {
                     emitter.emit("RStream", object_with_timestamp);
                 });
                 bindingsStream.on('end', () => {
-                    console.log("Ended stream");
+                    this.logger.info(`Ended Comunica Binding Stream for window time ${data.last_time_changed()}`, `RSPEngine`);
                 });
                 yield bindingsStream;
             }));

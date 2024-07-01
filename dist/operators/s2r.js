@@ -1,6 +1,7 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.CSPARQLWindow = exports.QuadContainer = exports.WindowInstance = exports.Tick = exports.ReportStrategy = void 0;
+const events_1 = require("events");
 var ReportStrategy;
 (function (ReportStrategy) {
     ReportStrategy[ReportStrategy["NonEmptyContent"] = 0] = "NonEmptyContent";
@@ -45,7 +46,7 @@ class QuadContainer {
 }
 exports.QuadContainer = QuadContainer;
 class CSPARQLWindow {
-    constructor(name, width, slide, report, tick, start_time) {
+    constructor(name, width, slide, report, tick, start_time, max_delay) {
         this.name = name;
         this.width = width;
         this.slide = slide;
@@ -54,8 +55,10 @@ class CSPARQLWindow {
         this.time = start_time;
         this.t0 = start_time;
         this.active_windows = new Map();
-        let EventEmitter = require('events').EventEmitter;
-        this.emitter = new EventEmitter();
+        this.emitter = new events_1.EventEmitter();
+        this.max_delay = max_delay;
+        this.late_buffer = new Map();
+        this.interval_id = setInterval(() => { this.process_late_elements(); }, this.slide);
     }
     getContent(timestamp) {
         let max_window = null;
@@ -76,31 +79,50 @@ class CSPARQLWindow {
         }
     }
     add(e, timestamp) {
+        var _a;
         console.debug("Window " + this.name + " Received element (" + e + "," + timestamp + ")");
         let toEvict = new Set();
         let t_e = timestamp;
         if (this.time > t_e) {
-            console.error("OUT OF ORDER NOT HANDLED");
+            if (this.time - t_e > this.max_delay) {
+                console.error("Late element [" + e + "] with timestamp [" + t_e + "] is out of the allowed delay [" + this.max_delay + "]");
+                return;
+            }
+            else {
+                console.warn("Late element [" + e + "] with timestamp [" + t_e + "] is being buffered for out of order processing");
+                if (!this.late_buffer.has(t_e)) {
+                    this.late_buffer.set(t_e, new Set());
+                }
+                (_a = this.late_buffer.get(t_e)) === null || _a === void 0 ? void 0 : _a.add(e);
+                return;
+            }
         }
+        this.process_event(e, t_e, toEvict);
+        for (let w of toEvict) {
+            console.debug("Evicting [" + w.open + "," + w.close + ")");
+            this.active_windows.delete(w);
+        }
+    }
+    process_event(e, t_e, toEvict) {
         this.scope(t_e);
         for (let w of this.active_windows.keys()) {
-            console.debug("Processing Window " + this.name + " [" + w.open + "," + w.close + ") for element (" + e + "," + timestamp + ")");
             if (w.open <= t_e && t_e < w.close) {
-                console.debug("Adding element [" + e + "] to Window [" + w.open + "," + w.close + ")");
                 let temp_window = this.active_windows.get(w);
                 if (temp_window) {
-                    temp_window.add(e, timestamp);
+                    temp_window.add(e, t_e);
                 }
             }
             else if (t_e > w.close) {
-                console.debug("Scheduling for Eviction [" + w.open + "," + w.close + ")");
                 toEvict.add(w);
             }
         }
+        this.emit_on_trigger(t_e);
+    }
+    emit_on_trigger(t_e) {
         let max_window = null;
         let max_time = 0;
         this.active_windows.forEach((value, window) => {
-            if (this.compute_report(window, value, timestamp)) {
+            if (this.compute_report(window, value, t_e)) {
                 if (window.close > max_time) {
                     max_time = window.close;
                     max_window = window;
@@ -109,17 +131,13 @@ class CSPARQLWindow {
         });
         if (max_window) {
             if (this.tick == Tick.TimeDriven) {
-                if (timestamp > this.time) {
-                    this.time = timestamp;
+                if (t_e > this.time) {
+                    this.time = t_e;
                     this.emitter.emit('RStream', this.active_windows.get(max_window));
                     // @ts-ignore
                     console.log("Window [" + max_window.open + "," + max_window.close + ") triggers. Content: " + this.active_windows.get(max_window));
                 }
             }
-        }
-        for (let w of toEvict) {
-            console.debug("Evicting [" + w.open + "," + w.close + ")");
-            this.active_windows.delete(w);
         }
     }
     compute_report(w, content, timestamp) {
@@ -131,15 +149,29 @@ class CSPARQLWindow {
     scope(t_e) {
         let c_sup = Math.ceil((Math.abs(t_e - this.t0) / this.slide)) * this.slide;
         let o_i = c_sup - this.width;
-        console.debug("Calculating the Windows to Open. First one opens at [" + o_i + "] and closes at [" + c_sup + "]");
         do {
-            console.debug("Computing Window [" + o_i + "," + (o_i + this.width) + ") if absent");
             computeWindowIfAbsent(this.active_windows, new WindowInstance(o_i, o_i + this.width), () => new QuadContainer(new Set(), 0));
             o_i += this.slide;
         } while (o_i <= t_e);
     }
     subscribe(output, call_back) {
         this.emitter.on(output, call_back);
+    }
+    process_late_elements() {
+        this.late_buffer.forEach((elements, timestamp) => {
+            elements.forEach((element) => {
+                let to_evict = new Set();
+                this.process_event(element, timestamp, to_evict);
+                for (let w of to_evict) {
+                    console.debug("Evicting [" + w.open + "," + w.close + ")");
+                    this.active_windows.delete(w);
+                }
+            });
+        });
+        this.late_buffer.clear();
+    }
+    set_current_time(t) {
+        this.time = t;
     }
 }
 exports.CSPARQLWindow = CSPARQLWindow;
