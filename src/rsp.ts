@@ -51,7 +51,7 @@ export class RSPEngine {
         let parser = new RSPQLParser();
         let parsed_query = parser.parse(query);
         parsed_query.s2r.forEach((window: WindowDefinition) => {
-            let windowImpl = new CSPARQLWindow(window.window_name, window.width, window.slide, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0, 60000);
+            let windowImpl = new CSPARQLWindow(window.window_name, window.width, window.slide, ReportStrategy.OnWindowClose, Tick.TimeDriven, 0, LOG_CONFIG.max_delay);
             this.windows.push(windowImpl);
             let stream = new RDFStream(window.stream_name, windowImpl);
             this.streams.set(window.stream_name, stream);
