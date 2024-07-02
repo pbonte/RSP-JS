@@ -17,6 +17,7 @@ export declare class RSPEngine {
     windows: Array<CSPARQLWindow>;
     streams: Map<string, RDFStream>;
     private r2r;
+    private logger;
     constructor(query: string);
     register(): any;
     getStream(stream_name: string): RDFStream | undefined;

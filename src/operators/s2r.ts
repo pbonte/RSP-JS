@@ -1,6 +1,6 @@
-import {EventEmitter} from "events";
+import { EventEmitter } from "events";
 // @ts-ignore
-import {Quad} from 'n3';
+import { Quad } from 'n3';
 
 export enum ReportStrategy {
     NonEmptyContent,
@@ -23,15 +23,19 @@ export class WindowInstance {
     }
 
     getDefinition() {
-        return "["+this.open+","+this.close+")";
+        return "[" + this.open + "," + this.close + ")";
     }
-    hasCode(){
+    hasCode() {
         return 0;
+    }
+
+    is_same(other_window: WindowInstance): boolean {
+        return this.open == other_window.open && this.close == other_window.close;
     }
 }
 
 
-export class QuadContainer{
+export class QuadContainer {
     elements: Set<Quad>;
     last_time_stamp_changed: number;
     constructor(elements: Set<Quad>, ts: number) {
@@ -42,7 +46,7 @@ export class QuadContainer{
     len() {
         return this.elements.size;
     }
-    add(quad: Quad, ts: number){
+    add(quad: Quad, ts: number) {
         this.elements.add(quad);
         this.last_time_stamp_changed = ts;
     }
@@ -62,8 +66,11 @@ export class CSPARQLWindow {
     report: ReportStrategy;
     tick: Tick;
     emitter: EventEmitter;
+    interval_id: NodeJS.Timeout;
     name: string;
-    constructor(name:string, width: number, slide: number, report: ReportStrategy, tick: Tick, start_time : number) {
+    private late_buffer: Map<number, Set<Quad>>; // Buffer for out-of-order late elements
+    private max_delay: number; // The maximum delay allowed for a observation to be considered in the window
+    constructor(name: string, width: number, slide: number, report: ReportStrategy, tick: Tick, start_time: number, max_delay: number) {
         this.name = name;
         this.width = width;
         this.slide = slide;
@@ -72,109 +79,148 @@ export class CSPARQLWindow {
         this.time = start_time;
         this.t0 = start_time;
         this.active_windows = new Map<WindowInstance, QuadContainer>();
-        let EventEmitter = require('events').EventEmitter;
         this.emitter = new EventEmitter();
+        this.max_delay = max_delay;
+        this.late_buffer = new Map<number, Set<Quad>>();
+        this.interval_id = setInterval(() => { this.process_late_elements() }, this.slide);
     }
-    getContent(timestamp: number): QuadContainer | undefined{
+    getContent(timestamp: number): QuadContainer | undefined {
         let max_window = null;
         let max_time = Number.MAX_SAFE_INTEGER;
-        this.active_windows.forEach((value: QuadContainer,window:WindowInstance)=> {
-            if(window.open <= timestamp && timestamp <= window.close){
-                if(window.close < max_time){
+        this.active_windows.forEach((value: QuadContainer, window: WindowInstance) => {
+            if (window.open <= timestamp && timestamp <= window.close) {
+                if (window.close < max_time) {
                     max_time = window.close;
                     max_window = window;
                 }
             }
         });
-        if(max_window){
+        if (max_window) {
             return this.active_windows.get(max_window);
-        }else{
+        } else {
             return undefined;
         }
     }
 
     add(e: Quad, timestamp: number) {
-        console.debug("Window " + this.name+ " Received element (" + e + "," + timestamp + ")");
+        console.debug("Window " + this.name + " Received element (" + e + "," + timestamp + ")");
         let toEvict = new Set<WindowInstance>();
         let t_e = timestamp;
 
         if (this.time > t_e) {
-            console.error("OUT OF ORDER NOT HANDLED");
-        }
-
-        this.scope(t_e);
-
-        for ( let w of this.active_windows.keys()){
-            console.debug("Processing Window " + this.name+ " [" + w.open + "," + w.close + ") for element (" + e + "," + timestamp + ")");
-                if (w.open <= t_e && t_e < w.close ){
-                    console.debug("Adding element [" + e + "] to Window [" + w.open + "," + w.close + ")");
-                    let temp_window = this.active_windows.get(w);
-                    if(temp_window){
-                        temp_window.add(e, timestamp);
-                    }
-                } else if (t_e > w.close ){
-                    console.debug("Scheduling for Eviction [" + w.open + "," + w.close + ")");
-                    toEvict.add(w);
-                }
-        }
-        let max_window = null;
-        let max_time = 0;
-        this.active_windows.forEach((value: QuadContainer,window:WindowInstance)=> {
-            if(this.compute_report(window,value, timestamp)){
-                if(window.close > max_time){
-                    max_time = window.close;
-                    max_window = window;
-                }
+            if (this.time - t_e > this.max_delay) {
+                console.error("Late element [" + e + "] with timestamp [" + t_e + "] is out of the allowed delay [" + this.max_delay + "]");
+                return;
             }
-        });
-        if(max_window){
-            if(this.tick == Tick.TimeDriven){
-                if(timestamp > this.time){
-                    this.time = timestamp;
-                    this.emitter.emit('RStream', this.active_windows.get(max_window));
-                    // @ts-ignore
-                    console.log("Window ["+ max_window.open + "," + max_window.close + ") triggers. Content: " + this.active_windows.get(max_window));
+            else {
+                console.warn("Late element [" + e + "] with timestamp [" + t_e + "] is being buffered for out of order processing");
+                if (!this.late_buffer.has(t_e)) {
+                    this.late_buffer.set(t_e, new Set<Quad>());
                 }
+                this.late_buffer.get(t_e)?.add(e);
+                return;
             }
         }
 
-        for(let w of toEvict){
+        this.process_event(e, t_e, toEvict);
+
+        for (let w of toEvict) {
             console.debug("Evicting [" + w.open + "," + w.close + ")");
             this.active_windows.delete(w);
         }
 
     }
-    compute_report(w: WindowInstance, content: QuadContainer, timestamp: number){
-        if(this.report == ReportStrategy.OnWindowClose) {
+
+    process_event(e: Quad, t_e: number, toEvict: Set<WindowInstance>) {
+        this.scope(t_e);
+        for (let w of this.active_windows.keys()) {
+            if (w.open <= t_e && t_e < w.close) {
+                let temp_window = this.active_windows.get(w);
+                if (temp_window) {
+                    temp_window.add(e, t_e);
+                }
+            } else if (t_e > w.close) {
+                toEvict.add(w);
+            }
+        }
+
+        this.emit_on_trigger(t_e);
+    }
+
+
+    emit_on_trigger(t_e: number) {
+        let max_window = null;
+        let max_time = 0;
+        this.active_windows.forEach((value: QuadContainer, window: WindowInstance) => {
+            if (this.compute_report(window, value, t_e)) {
+                if (window.close > max_time) {
+                    max_time = window.close;
+                    max_window = window;
+                }
+            }
+        });
+
+        if (max_window) {
+            if (this.tick == Tick.TimeDriven) {
+                if (t_e > this.time) {
+                    this.time = t_e;
+                    this.emitter.emit('RStream', this.active_windows.get(max_window));
+                    // @ts-ignore
+                    console.log("Window [" + max_window.open + "," + max_window.close + ") triggers. Content: " + this.active_windows.get(max_window));
+                }
+            }
+        }
+    }
+
+    compute_report(w: WindowInstance, content: QuadContainer, timestamp: number) {
+        if (this.report == ReportStrategy.OnWindowClose) {
             return w.close < timestamp;
         }
         return false;
 
     }
 
-    scope(t_e:number){
-        let c_sup =  Math.ceil(( Math.abs(t_e - this.t0) / this.slide)) * this.slide;
+    scope(t_e: number) {
+        let c_sup = Math.ceil((Math.abs(t_e - this.t0) / this.slide)) * this.slide;
         let o_i = c_sup - this.width;
-        console.debug("Calculating the Windows to Open. First one opens at [" + o_i + "] and closes at [" + c_sup + "]");
         do {
-            console.debug("Computing Window [" + o_i + "," + (o_i + this.width) + ") if absent");
-            computeWindowIfAbsent(this.active_windows, new WindowInstance(o_i, o_i + this.width), ()=>new QuadContainer(new Set<Quad>(),0));
+            computeWindowIfAbsent(this.active_windows, new WindowInstance(o_i, o_i + this.width), () => new QuadContainer(new Set<Quad>(), 0));
             o_i += this.slide;
-
         } while (o_i <= t_e);
-
     }
 
-    subscribe(output: 'RStream'|'IStream'|'DStream', call_back: (data: QuadContainer) => void) {
-        this.emitter.on(output,call_back);
+
+    subscribe(output: 'RStream' | 'IStream' | 'DStream', call_back: (data: QuadContainer) => void) {
+        this.emitter.on(output, call_back);
+    }
+
+    process_late_elements() {
+        this.late_buffer.forEach((elements: Set<Quad>, timestamp: number) => {
+            elements.forEach((element: Quad) => {
+                let to_evict = new Set<WindowInstance>();
+                this.process_event(element, timestamp, to_evict);
+
+                for (let w of to_evict) {
+                    console.debug("Evicting [" + w.open + "," + w.close + ")");
+                    this.active_windows.delete(w);
+                }
+            });
+        });
+        this.late_buffer.clear();
+    }
+
+    set_current_time(t: number) {
+        this.time = t;
     }
 }
 function computeWindowIfAbsent(map: Map<WindowInstance, QuadContainer>, key: WindowInstance, mappingFunction: (key: WindowInstance) => QuadContainer) {
     let val = map.get(key);
     let found = false;
-    for (let w of map.keys()){
-        if (w.open == key.open && w.close == key.close){
+
+    for (let w of map.keys()) {
+        if (w.is_same(key)) {
             found = true;
+            val = map.get(w);
             break;
         }
     }
@@ -182,5 +228,5 @@ function computeWindowIfAbsent(map: Map<WindowInstance, QuadContainer>, key: Win
         val = mappingFunction(key);
         map.set(key, val);
     }
-
+    return val;
 }

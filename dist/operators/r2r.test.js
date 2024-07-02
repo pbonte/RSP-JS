@@ -34,3 +34,24 @@ test('test_query_engine', () => __awaiter(void 0, void 0, void 0, function* () {
         expect(resuults.length).toBe(2);
     });
 }));
+test('test_query_engine_with_extension_functions', () => __awaiter(void 0, void 0, void 0, function* () {
+    let r2r = new r2r_1.R2ROperator(`
+        PREFIX extension: <http://extension.org/functions#>
+        SELECT (extension:sqrt(?o) as ?sqrt) (extension:pow(?o,2) as ?pow) WHERE { ?s ?p ?o }`);
+    const quad1 = quad(namedNode('https://rsp.js/test_subject_0'), namedNode('http://rsp.js/test_property'), literal('4'), defaultGraph());
+    const quad2 = quad(namedNode('https://rsp.js/test_subject_1'), namedNode('http://rsp.js/test_property'), literal('9'), defaultGraph());
+    let quadSet = new Set();
+    quadSet.add(quad1);
+    quadSet.add(quad2);
+    let container = new s2r_1.QuadContainer(quadSet, 0);
+    const bindingsStream = yield r2r.execute(container);
+    let results = new Array();
+    // @ts-ignore
+    bindingsStream.on('data', (binding) => {
+        results.push(binding);
+    });
+    bindingsStream.on('end', () => {
+        // The data-listener will not be called anymore once we get here.
+        expect(results.length).toBe(2);
+    });
+}));

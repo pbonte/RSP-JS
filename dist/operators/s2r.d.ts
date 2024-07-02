@@ -1,4 +1,5 @@
 /// <reference types="node" />
+/// <reference types="node" />
 import { EventEmitter } from "events";
 import { Quad } from 'n3';
 export declare enum ReportStrategy {
@@ -18,6 +19,7 @@ export declare class WindowInstance {
     constructor(open: number, close: number);
     getDefinition(): string;
     hasCode(): number;
+    is_same(other_window: WindowInstance): boolean;
 }
 export declare class QuadContainer {
     elements: Set<Quad>;
@@ -36,11 +38,18 @@ export declare class CSPARQLWindow {
     report: ReportStrategy;
     tick: Tick;
     emitter: EventEmitter;
+    interval_id: NodeJS.Timeout;
     name: string;
-    constructor(name: string, width: number, slide: number, report: ReportStrategy, tick: Tick, start_time: number);
+    private late_buffer;
+    private max_delay;
+    constructor(name: string, width: number, slide: number, report: ReportStrategy, tick: Tick, start_time: number, max_delay: number);
     getContent(timestamp: number): QuadContainer | undefined;
     add(e: Quad, timestamp: number): void;
+    process_event(e: Quad, t_e: number, toEvict: Set<WindowInstance>): void;
+    emit_on_trigger(t_e: number): void;
     compute_report(w: WindowInstance, content: QuadContainer, timestamp: number): boolean;
     scope(t_e: number): void;
     subscribe(output: 'RStream' | 'IStream' | 'DStream', call_back: (data: QuadContainer) => void): void;
+    process_late_elements(): void;
+    set_current_time(t: number): void;
 }
