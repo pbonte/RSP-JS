@@ -129,7 +129,6 @@ export class CSPARQLWindow {
 
     process_event(e: Quad, t_e: number, toEvict: Set<WindowInstance>) {
         this.scope(t_e);
-
         for (let w of this.active_windows.keys()) {
             if (w.open <= t_e && t_e < w.close) {
                 let temp_window = this.active_windows.get(w);

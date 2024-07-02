@@ -170,7 +170,7 @@ test('out_of_order_processing', () => {
     });
 
     window.set_current_time(20);
-
+console.log(window);
     window.add(quad(
         namedNode('https://rsp.js/test_subject_0'),
         namedNode('http://rsp.js/test_property'),
@@ -189,6 +189,6 @@ test('out_of_order_processing', () => {
         namedNode('http://rsp.js/test_object'),
         defaultGraph(),
     ), 14);
-    expect(window.active_windows.size).toBe(2);    
+    expect(window.active_windows.size).toBe(2);        
     clearInterval(window.interval_id);
 });

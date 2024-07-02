@@ -41,10 +41,12 @@ class RSPQLParser {
                 const regexp = /FROM +NAMED +WINDOW +([^ ]+) +ON +STREAM +([^ ]+) +\[RANGE +([^ ]+) +STEP +([^ ]+)\]/g;
                 const matches = trimmed_line.matchAll(regexp);
                 for (const match of matches) {
-                    parsed.add_s2r({ window_name: this.unwrap(match[1], prefixMapper),
+                    parsed.add_s2r({
+                        window_name: this.unwrap(match[1], prefixMapper),
                         stream_name: this.unwrap(match[2], prefixMapper),
                         width: Number(match[3]),
-                        slide: Number(match[4]) });
+                        slide: Number(match[4])
+                    });
                 }
             }
             else {

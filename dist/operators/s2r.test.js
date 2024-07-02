@@ -105,6 +105,7 @@ test('out_of_order_processing', () => {
         console.log(`RStream output: ${data}`);
     });
     window.set_current_time(20);
+    console.log(window);
     window.add(quad(namedNode('https://rsp.js/test_subject_0'), namedNode('http://rsp.js/test_property'), namedNode('http://rsp.js/test_object'), defaultGraph()), 28);
     window.add(quad(namedNode('https://rsp.js/test_subject_1'), namedNode('http://rsp.js/test_property'), namedNode('http://rsp.js/test_object'), defaultGraph()), 15);
     window.add(quad(namedNode('https://rsp.js/test_subject_2'), namedNode('http://rsp.js/test_property'), namedNode('http://rsp.js/test_object'), defaultGraph()), 14);

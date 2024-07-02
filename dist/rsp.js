@@ -67,7 +67,7 @@ class RSPEngine {
         let parser = new rspql_1.RSPQLParser();
         let parsed_query = parser.parse(query);
         parsed_query.s2r.forEach((window) => {
-            let windowImpl = new s2r_1.CSPARQLWindow(window.window_name, window.width, window.slide, s2r_1.ReportStrategy.OnWindowClose, s2r_1.Tick.TimeDriven, 0, 60000);
+            let windowImpl = new s2r_1.CSPARQLWindow(window.window_name, window.width, window.slide, s2r_1.ReportStrategy.OnWindowClose, s2r_1.Tick.TimeDriven, 0, LOG_CONFIG.max_delay);
             this.windows.push(windowImpl);
             let stream = new RDFStream(window.stream_name, windowImpl);
             this.streams.set(window.stream_name, stream);
@@ -79,33 +79,35 @@ class RSPEngine {
         let emitter = new EventEmitter();
         this.windows.forEach((window) => {
             window.subscribe("RStream", (data) => __awaiter(this, void 0, void 0, function* () {
-                this.logger.info(`Received window content ${data} for time ${data.last_time_changed()}`, `RSPEngine`);
-                // iterate over all the windows
-                for (let windowIt of this.windows) {
-                    // filter out the current triggering one
-                    if (windowIt != window) {
-                        let currentWindowData = windowIt.getContent(data.last_time_changed());
-                        if (currentWindowData) {
-                            // add the content of the other windows to the quad container
-                            currentWindowData.elements.forEach((q) => data.add(q, data.last_time_changed()));
+                if (data.len() > 0) {
+                    this.logger.info(`Received window content for time ${data.last_time_changed()}`, `RSPEngine`);
+                    // iterate over all the windows
+                    for (let windowIt of this.windows) {
+                        // filter out the current triggering one
+                        if (windowIt != window) {
+                            let currentWindowData = windowIt.getContent(data.last_time_changed());
+                            if (currentWindowData) {
+                                // add the content of the other windows to the quad container
+                                currentWindowData.elements.forEach((q) => data.add(q, data.last_time_changed()));
+                            }
                         }
                     }
+                    this.logger.info(`Starting Window Query Processing for the window time ${data.last_time_changed()} with window size ${data.len()}`, `RSPEngine`);
+                    let bindingsStream = yield this.r2r.execute(data);
+                    bindingsStream.on('data', (binding) => {
+                        let object_with_timestamp = {
+                            bindings: binding,
+                            timestamp_from: window.t0,
+                            timestamp_to: window.t0 + window.slide
+                        };
+                        window.t0 += window.slide;
+                        emitter.emit("RStream", object_with_timestamp);
+                    });
+                    bindingsStream.on('end', () => {
+                        this.logger.info(`Ended Comunica Binding Stream for window time ${data.last_time_changed()} with window size ${data.len()}`, `RSPEngine`);
+                    });
+                    yield bindingsStream;
                 }
-                this.logger.info(`Starting Window Query Processing for the window time ${data.last_time_stamp_changed}`, `RSPEngine`);
-                let bindingsStream = yield this.r2r.execute(data);
-                bindingsStream.on('data', (binding) => {
-                    let object_with_timestamp = {
-                        bindings: binding,
-                        timestamp_from: window.t0,
-                        timestamp_to: window.t0 + window.slide
-                    };
-                    window.t0 += window.slide;
-                    emitter.emit("RStream", object_with_timestamp);
-                });
-                bindingsStream.on('end', () => {
-                    this.logger.info(`Ended Comunica Binding Stream for window time ${data.last_time_changed()}`, `RSPEngine`);
-                });
-                yield bindingsStream;
             }));
         });
         return emitter;
