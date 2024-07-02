@@ -28,6 +28,10 @@ export class WindowInstance {
     hasCode() {
         return 0;
     }
+
+    is_same(other_window: WindowInstance): boolean {
+        return this.open == other_window.open && this.close == other_window.close;
+    }
 }
 
 
@@ -182,10 +186,9 @@ export class CSPARQLWindow {
         do {
             computeWindowIfAbsent(this.active_windows, new WindowInstance(o_i, o_i + this.width), () => new QuadContainer(new Set<Quad>(), 0));
             o_i += this.slide;
-
         } while (o_i <= t_e);
-
     }
+
 
     subscribe(output: 'RStream' | 'IStream' | 'DStream', call_back: (data: QuadContainer) => void) {
         this.emitter.on(output, call_back);
@@ -213,9 +216,11 @@ export class CSPARQLWindow {
 function computeWindowIfAbsent(map: Map<WindowInstance, QuadContainer>, key: WindowInstance, mappingFunction: (key: WindowInstance) => QuadContainer) {
     let val = map.get(key);
     let found = false;
+
     for (let w of map.keys()) {
-        if (w.open == key.open && w.close == key.close) {
+        if (w.is_same(key)) {
             found = true;
+            val = map.get(w);
             break;
         }
     }
@@ -223,5 +228,5 @@ function computeWindowIfAbsent(map: Map<WindowInstance, QuadContainer>, key: Win
         val = mappingFunction(key);
         map.set(key, val);
     }
-
+    return val;
 }

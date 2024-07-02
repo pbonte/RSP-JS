@@ -26,6 +26,9 @@ class WindowInstance {
     hasCode() {
         return 0;
     }
+    is_same(other_window) {
+        return this.open == other_window.open && this.close == other_window.close;
+    }
 }
 exports.WindowInstance = WindowInstance;
 class QuadContainer {
@@ -179,8 +182,9 @@ function computeWindowIfAbsent(map, key, mappingFunction) {
     let val = map.get(key);
     let found = false;
     for (let w of map.keys()) {
-        if (w.open == key.open && w.close == key.close) {
+        if (w.is_same(key)) {
             found = true;
+            val = map.get(w);
             break;
         }
     }
@@ -188,4 +192,5 @@ function computeWindowIfAbsent(map, key, mappingFunction) {
         val = mappingFunction(key);
         map.set(key, val);
     }
+    return val;
 }

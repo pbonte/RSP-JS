@@ -19,6 +19,7 @@ export declare class WindowInstance {
     constructor(open: number, close: number);
     getDefinition(): string;
     hasCode(): number;
+    is_same(other_window: WindowInstance): boolean;
 }
 export declare class QuadContainer {
     elements: Set<Quad>;
